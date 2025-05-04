@@ -947,6 +947,8 @@ build.json @home-assistant/supervisor
 /tests/components/min_max/ @gjohansson-ST
 /homeassistant/components/minecraft_server/ @elmurato
 /tests/components/minecraft_server/ @elmurato
+/homeassistant/components/miner_pool_stats/ @PixelByProxy
+/tests/components/miner_pool_stats/ @PixelByProxy
 /homeassistant/components/minio/ @tkislan
 /tests/components/minio/ @tkislan
 /homeassistant/components/moat/ @bdraco

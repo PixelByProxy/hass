@@ -3972,6 +3972,12 @@
       "config_flow": true,
       "iot_class": "local_polling"
     },
+    "miner_pool_stats": {
+      "name": "Miner Pool Stats",
+      "integration_type": "hub",
+      "config_flow": true,
+      "iot_class": "cloud_polling"
+    },
     "mini_connected": {
       "name": "MINI Connected",
       "integration_type": "virtual",

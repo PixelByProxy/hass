@@ -382,6 +382,7 @@ FLOWS = {
         "mikrotik",
         "mill",
         "minecraft_server",
+        "miner_pool_stats",
         "mjpeg",
         "moat",
         "mobile_app",
