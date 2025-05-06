@@ -8,9 +8,9 @@ from homeassistant.const import CONF_ADDRESS, CONF_URL
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.debounce import Debouncer
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .api import PublicPoolServer
+from .api import ClientData, PublicPoolServer, PublicPoolServerConnectionError
 
 type PoolConfigEntry = ConfigEntry[PoolCoordinator]
 
@@ -20,7 +20,7 @@ _LOGGER = logging.getLogger(__name__)
 REQUEST_REFRESH_DEFAULT_COOLDOWN = 5
 
 
-class PoolCoordinator(DataUpdateCoordinator):
+class PoolCoordinator(DataUpdateCoordinator[ClientData]):
     """Coordinator for Pool."""
 
     _api: PublicPoolServer
@@ -64,8 +64,9 @@ class PoolCoordinator(DataUpdateCoordinator):
         # except MinecraftServerAddressError as error:
         #     raise ConfigEntryNotReady(f"Initialization failed: {error}") from error
 
-    async def async_update(self):
-        """Update the data."""
-        # Simulate fetching data from an API or database
-        self._data = await self._api.async_get_data()
-        return self._data
+    async def _async_update_data(self) -> ClientData:
+        """Get updated data from the server."""
+        try:
+            return await self._api.async_get_data()
+        except PublicPoolServerConnectionError as error:
+            raise UpdateFailed(error) from error

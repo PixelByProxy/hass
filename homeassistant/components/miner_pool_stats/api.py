@@ -31,7 +31,7 @@ class ClientData:
     """Representation of Pool client data."""
 
     best_difficulty: float
-    workers_count: int
+    worker_count: int
     worker_list: list[WorkerData] | None = None
 
 
@@ -90,7 +90,7 @@ class PublicPoolServer:
 
         return True
 
-    async def async_get_data(self) -> ClientData | None:
+    async def async_get_data(self) -> ClientData:
         """Get updated data from the server, supporting both Java and Bedrock Edition servers."""
 
         # check if initialized
@@ -108,13 +108,13 @@ class PublicPoolServer:
                     json = await response.json()
                     return ClientData(json["bestDifficulty"], json["workersCount"])
 
-                _LOGGER.error(
-                    "Failed to fetch workers, status code: %s", response.status
+                raise PublicPoolServerAddressError(
+                    f"Lookup of '{self._address}' failed: {response.status}"
                 )
         except ClientError as err:
-            _LOGGER.error("Error while fetching workers: %s", err)
-
-        return None
+            raise PublicPoolServerConnectionError(
+                f"Failed to fetch workers: {self._get_error_message(err)}"
+            ) from err
 
     def _get_error_message(self, error: BaseException) -> str:
         """Get error message of an exception."""

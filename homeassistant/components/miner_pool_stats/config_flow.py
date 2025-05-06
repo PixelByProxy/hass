@@ -35,8 +35,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     pool = PublicPoolServer(hass, url, address)
     await pool.async_get_data()
 
-    # Return info that you want to store in the config entry.
-    return {"title": "Name of the device"}
+    return {"title": address.lower()}
 
 
 class PoolConfigFlow(ConfigFlow, domain=DOMAIN):
