@@ -32,7 +32,7 @@ class ClientData:
 
     best_difficulty: float
     worker_count: int
-    worker_list: list[WorkerData] | None = None
+    worker_list: list[WorkerData]
 
 
 class PublicPoolServerAddressError(Exception):
@@ -106,7 +106,38 @@ class PublicPoolServer:
             async with ClientSession() as session, session.get(url) as response:
                 if response.status == 200:
                     json = await response.json()
-                    return ClientData(json["bestDifficulty"], json["workersCount"])
+
+                    # create a dictionary of workers by name. If the worker exits, combine the data
+                    workers: dict[str, WorkerData] = {}
+                    for workerJson in json["workers"]:
+                        worker = WorkerData(
+                            name=workerJson["name"],
+                            best_difficulty=float(workerJson["bestDifficulty"]),
+                            hash_rate=self._calc_tera_hash(
+                                float(workerJson["hashRate"])
+                            ),
+                            start_time=datetime.fromisoformat(workerJson["startTime"]),
+                            last_seen=datetime.fromisoformat(workerJson["lastSeen"]),
+                        )
+                        if worker.name in workers:
+                            workers[
+                                worker.name
+                            ].best_difficulty += worker.best_difficulty
+                            workers[worker.name].hash_rate += worker.hash_rate
+                            workers[worker.name].last_seen = max(
+                                workers[worker.name].last_seen, worker.last_seen
+                            )
+                            workers[worker.name].start_time = min(
+                                workers[worker.name].start_time, worker.start_time
+                            )
+                        else:
+                            workers[worker.name] = worker
+
+                    return ClientData(
+                        float(json["bestDifficulty"]),
+                        int(json["workersCount"]),
+                        list(workers.values()),
+                    )
 
                 raise PublicPoolServerAddressError(
                     f"Lookup of '{self._address}' failed: {response.status}"
@@ -123,3 +154,9 @@ class PublicPoolServer:
             return repr(error)
 
         return str(error)
+
+    def _calc_tera_hash(self, hash_rate: float) -> float:
+        """Convert hash rate to TH/s."""
+        if hash_rate <= 0:
+            return 0
+        return round(hash_rate / 1_000_000_000_000, 1)

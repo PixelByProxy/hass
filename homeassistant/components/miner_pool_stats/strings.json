@@ -25,6 +25,9 @@
       },
       "best_difficulty": {
         "name": "Best Difficulty"
+      },
+      "hash_rate": {
+        "name": "Hashrate"
       }
     }
   }

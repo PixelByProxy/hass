@@ -28,3 +28,25 @@ class ClientEntity(CoordinatorEntity[PoolCoordinator]):
             model=MANUFACTURER,
             name=coordinator.name,
         )
+
+
+class PoolAddressWorkerDeviceEntity(CoordinatorEntity[PoolCoordinator]):
+    """Representation of a Minecraft Server base entity."""
+
+    _attr_has_entity_name = True
+
+    def __init__(
+        self,
+        coordinator: PoolCoordinator,
+        config_entry: PoolConfigEntry,
+        worker_name: str,
+    ) -> None:
+        """Initialize base entity."""
+        super().__init__(coordinator)
+
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, f"{config_entry.entry_id}-{worker_name}")},
+            manufacturer=MANUFACTURER,
+            model=MANUFACTURER,
+            name=worker_name,
+        )
