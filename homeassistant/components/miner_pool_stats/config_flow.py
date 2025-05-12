@@ -33,7 +33,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     address = data[CONF_ADDRESS]
 
     pool = PublicPoolServer(hass, url, address)
-    await pool.async_get_data()
+    await pool.async_initialize()
 
     return {"title": address.lower()}
 
@@ -58,6 +58,7 @@ class PoolConfigFlow(ConfigFlow, domain=DOMAIN):
             try:
                 info = await validate_input(self.hass, user_input)
             except PublicPoolServerConnectionError:
+                _LOGGER.exception("Connection exception")
                 errors["base"] = "cannot_connect"
             except Exception:
                 _LOGGER.exception("Unexpected exception")

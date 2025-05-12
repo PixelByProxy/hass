@@ -118,7 +118,6 @@ async def async_setup_entry(
         ]
     )
 
-    # Add sensor entities.
     async_add_entities(sensors)
 
 

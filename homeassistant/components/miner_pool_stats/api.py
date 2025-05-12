@@ -35,19 +35,11 @@ class ClientData:
     worker_list: list[WorkerData]
 
 
-class PublicPoolServerAddressError(Exception):
-    """Raised when the input address is invalid."""
-
-
 class PublicPoolServerConnectionError(Exception):
     """Raised when no data can be fetched from the server."""
 
 
-class PublicPoolServerClientError(Exception):
-    """Raised when the client was not found."""
-
-
-class PoolNotInitializedError(Exception):
+class PublicPoolServerNotInitializedError(Exception):
     """Raised when APIs are used although server instance is not initialized yet."""
 
 
@@ -62,20 +54,7 @@ class PublicPoolServer:
 
     async def async_initialize(self) -> None:
         """Perform async initialization of server instance."""
-        try:
-            await self.async_get_data()
-            _LOGGER.debug(
-                "Initializing server instance with address '%s'", self._address
-            )
-        except ValueError as error:
-            raise PublicPoolServerAddressError(
-                f"Lookup of '{self._address}' failed: {self._get_error_message(error)}"
-            ) from error
-
-        _LOGGER.debug(
-            "Initialized server instance with address '%s'",
-            self._address,
-        )
+        await self.async_get_data()
 
     async def async_is_online(self) -> bool:
         """Check if the server is online, supporting both Java and Bedrock Edition servers."""
@@ -95,11 +74,11 @@ class PublicPoolServer:
 
         # check if initialized
         if self._url is None or self._address is None:
-            raise PoolNotInitializedError(
+            raise PublicPoolServerNotInitializedError(
                 f"Server instance with address '{self._address}' is not initialized"
             )
 
-        url = f"{self._url}/api/client/{self._address}"
+        url = f"{self._url.rstrip('/')}/api/client/{self._address}"
         _LOGGER.debug("Fetching workers from %s", url)
 
         try:
@@ -107,7 +86,8 @@ class PublicPoolServer:
                 if response.status == 200:
                     json = await response.json()
 
-                    # create a dictionary of workers by name. If the worker exits, combine the data
+                    # create a dictionary of workers by name
+                    # if the worker exists, combine the data
                     workers: dict[str, WorkerData] = {}
                     for workerJson in json["workers"]:
                         worker = WorkerData(
@@ -120,10 +100,11 @@ class PublicPoolServer:
                             last_seen=datetime.fromisoformat(workerJson["lastSeen"]),
                         )
                         if worker.name in workers:
-                            workers[
-                                worker.name
-                            ].best_difficulty += worker.best_difficulty
                             workers[worker.name].hash_rate += worker.hash_rate
+                            workers[worker.name].best_difficulty = max(
+                                workers[worker.name].best_difficulty,
+                                worker.best_difficulty,
+                            )
                             workers[worker.name].last_seen = max(
                                 workers[worker.name].last_seen, worker.last_seen
                             )
@@ -133,19 +114,30 @@ class PublicPoolServer:
                         else:
                             workers[worker.name] = worker
 
+                    # if there are no workers, log a warning
+                    if not workers:
+                        _LOGGER.warning(
+                            "No workers found for address %s", self._address
+                        )
+
+                    try:
+                        best_difficulty = float(json["bestDifficulty"])
+                    except KeyError:
+                        best_difficulty = 0.0
+
                     return ClientData(
-                        float(json["bestDifficulty"]),
+                        best_difficulty,
                         int(json["workersCount"]),
                         list(workers.values()),
                     )
 
-                raise PublicPoolServerAddressError(
-                    f"Lookup of '{self._address}' failed: {response.status}"
+                raise PublicPoolServerConnectionError(
+                    f"Lookup of '{self._address}' failed: Status code {response.status}"
                 )
-        except ClientError as err:
+        except ClientError as error:
             raise PublicPoolServerConnectionError(
-                f"Failed to fetch workers: {self._get_error_message(err)}"
-            ) from err
+                f"Lookup of '{self._address}' failed: {self._get_error_message(error)}"
+            ) from error
 
     def _get_error_message(self, error: BaseException) -> str:
         """Get error message of an exception."""

@@ -45,24 +45,19 @@ class PoolCoordinator(DataUpdateCoordinator[ClientData]):
         )
 
     async def _async_setup(self) -> None:
-        """Set up the Minecraft Server data coordinator."""
+        """Set up the Pool coordinator."""
 
         url = self._entry.data[CONF_URL]
         address = self._entry.data[CONF_ADDRESS]
 
-        # Create API instance
+        # create API instance
         self._api = PublicPoolServer(self._hass, url, address)
 
-        # Validate the API connection (and authentication)
-        data = await self._api.async_get_data()
-        if data is None:
-            raise ConfigEntryNotReady("Unable to load pool data.")
-
-        # Initialize API instance.
-        # try:
-        #     await self._api.async_initialize()
-        # except MinecraftServerAddressError as error:
-        #     raise ConfigEntryNotReady(f"Initialization failed: {error}") from error
+        # validate the connection
+        try:
+            return await self._api.async_initialize()
+        except PublicPoolServerConnectionError as error:
+            raise ConfigEntryNotReady(f"Unable to load pool data: {error}") from error
 
     async def _async_update_data(self) -> ClientData:
         """Get updated data from the server."""
