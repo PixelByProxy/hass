@@ -1,0 +1,15 @@
+{
+  "entity": {
+    "sensor": {
+      "worker_count": {
+        "default": "mdi:account-multiple"
+      },
+      "hash_rate": {
+        "default": "mdi:pound"
+      },
+      "best_difficulty": {
+        "default": "mdi:hard-hat"
+      }
+    }
+  }
+}

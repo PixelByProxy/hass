@@ -52,7 +52,7 @@ class PoolConfigFlow(ConfigFlow, domain=DOMAIN):
             url = user_input[CONF_URL]
             address = user_input[CONF_ADDRESS]
 
-            # Abort config flow if service is already configured.
+            # abort config flow if service is already configured
             self._async_abort_entries_match({CONF_URL: url, CONF_ADDRESS: address})
 
             try:

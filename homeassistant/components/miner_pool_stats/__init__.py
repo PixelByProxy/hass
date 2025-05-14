@@ -7,14 +7,13 @@ from homeassistant.core import HomeAssistant
 
 from .coordinator import PoolConfigEntry, PoolCoordinator
 
-# For your initial PR, limit it to 1 platform.
 _PLATFORMS: list[Platform] = [Platform.SENSOR]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: PoolConfigEntry) -> bool:
     """Set up Miner Pool Stats from a config entry."""
 
-    # Create coordinator instance and store it.
+    # create coordinator instance and store it
     coordinator = PoolCoordinator(hass, entry)
     await coordinator.async_config_entry_first_refresh()
     entry.runtime_data = coordinator

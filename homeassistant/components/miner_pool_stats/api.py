@@ -2,11 +2,16 @@
 
 from dataclasses import dataclass
 from datetime import datetime
+from functools import partial
 import logging
 
 from aiohttp import ClientError, ClientSession
 
+from homeassistant.components.recorder import get_instance, history
+from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 from homeassistant.core import HomeAssistant
+
+from .const import KEY_BEST_DIFFICULTY
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -16,8 +21,8 @@ DATA_UPDATE_RETRIES: int = 3
 
 
 @dataclass
-class WorkerData:
-    """Representation of Pool worker data."""
+class PoolAddressWorkerData:
+    """Representation of Pool address worker data."""
 
     name: str
     best_difficulty: float
@@ -27,12 +32,12 @@ class WorkerData:
 
 
 @dataclass
-class ClientData:
-    """Representation of Pool client data."""
+class PoolAddressData:
+    """Representation of Pool address data."""
 
     best_difficulty: float
     worker_count: int
-    worker_list: list[WorkerData]
+    worker_list: list[PoolAddressWorkerData]
 
 
 class PublicPoolServerConnectionError(Exception):
@@ -69,7 +74,7 @@ class PublicPoolServer:
 
         return True
 
-    async def async_get_data(self) -> ClientData:
+    async def async_get_data(self) -> PoolAddressData:
         """Get updated data from the server, supporting both Java and Bedrock Edition servers."""
 
         # check if initialized
@@ -88,9 +93,9 @@ class PublicPoolServer:
 
                     # create a dictionary of workers by name
                     # if the worker exists, combine the data
-                    workers: dict[str, WorkerData] = {}
+                    workers: dict[str, PoolAddressWorkerData] = {}
                     for workerJson in json["workers"]:
-                        worker = WorkerData(
+                        worker = PoolAddressWorkerData(
                             name=workerJson["name"],
                             best_difficulty=float(workerJson["bestDifficulty"]),
                             hash_rate=self._calc_tera_hash(
@@ -99,6 +104,15 @@ class PublicPoolServer:
                             start_time=datetime.fromisoformat(workerJson["startTime"]),
                             last_seen=datetime.fromisoformat(workerJson["lastSeen"]),
                         )
+
+                        # get the maximum stored for the best difficulty
+                        state_best_difficulty = await self._get_max_best_difficulty(
+                            worker.name
+                        )
+                        worker.best_difficulty = max(
+                            worker.best_difficulty, state_best_difficulty
+                        )
+
                         if worker.name in workers:
                             workers[worker.name].hash_rate += worker.hash_rate
                             workers[worker.name].best_difficulty = max(
@@ -125,7 +139,7 @@ class PublicPoolServer:
                     except KeyError:
                         best_difficulty = 0.0
 
-                    return ClientData(
+                    return PoolAddressData(
                         best_difficulty,
                         int(json["workersCount"]),
                         list(workers.values()),
@@ -152,3 +166,37 @@ class PublicPoolServer:
         if hash_rate <= 0:
             return 0
         return round(hash_rate / 1_000_000_000_000, 1)
+
+    async def _get_max_best_difficulty(self, worker_name: str) -> float:
+        """Get the maximum value for a sensor."""
+
+        entity_id = (
+            f"{SENSOR_DOMAIN}.{self._address}_{worker_name}_{KEY_BEST_DIFFICULTY}"
+        )
+
+        val = await get_instance(self._hass).async_add_executor_job(
+            partial(
+                history.get_last_state_changes,
+                self._hass,
+                1,
+                entity_id=entity_id,
+            )
+        )
+
+        if val is not None:
+            states = val.get(entity_id)
+            if states is not None and len(states) > 0:
+                for state in states:
+                    if state.state is not None and self.is_float(state.state):
+                        return float(state.state)
+
+        return 0.0
+
+    def is_float(self, string_value: str) -> bool:
+        """Check if a string can be converted to a float."""
+        try:
+            float(string_value)
+        except ValueError:
+            return False
+        else:
+            return True

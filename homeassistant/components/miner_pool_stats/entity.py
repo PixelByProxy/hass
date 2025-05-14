@@ -1,16 +1,14 @@
-"""Base entity for the Minecraft Server integration."""
+"""Base entity for the Miner Pool Stats integration."""
 
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN
+from .const import DOMAIN, PUBLIC_POOL, WALLET_ADDRESS, WORKER
 from .coordinator import PoolConfigEntry, PoolCoordinator
 
-MANUFACTURER = "Public Pool"
 
-
-class ClientEntity(CoordinatorEntity[PoolCoordinator]):
-    """Representation of a Minecraft Server base entity."""
+class PoolAddressDeviceEntity(CoordinatorEntity[PoolCoordinator]):
+    """Representation of a Pool Address base entity."""
 
     _attr_has_entity_name = True
 
@@ -24,14 +22,14 @@ class ClientEntity(CoordinatorEntity[PoolCoordinator]):
 
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, config_entry.entry_id)},
-            manufacturer=MANUFACTURER,
-            model=MANUFACTURER,
+            manufacturer=PUBLIC_POOL,
+            model=WALLET_ADDRESS,
             name=coordinator.name,
         )
 
 
 class PoolAddressWorkerDeviceEntity(CoordinatorEntity[PoolCoordinator]):
-    """Representation of a Minecraft Server base entity."""
+    """Representation of a Pool Address Worker base entity."""
 
     _attr_has_entity_name = True
 
@@ -46,7 +44,7 @@ class PoolAddressWorkerDeviceEntity(CoordinatorEntity[PoolCoordinator]):
 
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, f"{config_entry.entry_id}-{worker_name}")},
-            manufacturer=MANUFACTURER,
-            model=MANUFACTURER,
+            manufacturer=PUBLIC_POOL,
+            model=WORKER,
             name=worker_name,
         )

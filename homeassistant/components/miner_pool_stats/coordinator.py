@@ -10,7 +10,7 @@ from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .api import ClientData, PublicPoolServer, PublicPoolServerConnectionError
+from .api import PoolAddressData, PublicPoolServer, PublicPoolServerConnectionError
 
 type PoolConfigEntry = ConfigEntry[PoolCoordinator]
 
@@ -20,7 +20,7 @@ _LOGGER = logging.getLogger(__name__)
 REQUEST_REFRESH_DEFAULT_COOLDOWN = 5
 
 
-class PoolCoordinator(DataUpdateCoordinator[ClientData]):
+class PoolCoordinator(DataUpdateCoordinator[PoolAddressData]):
     """Coordinator for Pool."""
 
     _api: PublicPoolServer
@@ -59,7 +59,7 @@ class PoolCoordinator(DataUpdateCoordinator[ClientData]):
         except PublicPoolServerConnectionError as error:
             raise ConfigEntryNotReady(f"Unable to load pool data: {error}") from error
 
-    async def _async_update_data(self) -> ClientData:
+    async def _async_update_data(self) -> PoolAddressData:
         """Get updated data from the server."""
         try:
             return await self._api.async_get_data()

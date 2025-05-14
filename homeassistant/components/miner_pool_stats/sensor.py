@@ -1,10 +1,9 @@
-"""The Minecraft Server sensor platform."""
+"""The Pool Server sensor platform."""
 
 from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any
 
 from homeassistant.components.sensor import (
     DOMAIN as SENSOR_DOMAIN,
@@ -17,56 +16,51 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import StateType
 
-from .api import ClientData, WorkerData
+from .api import PoolAddressData, PoolAddressWorkerData
+from .const import (
+    KEY_BEST_DIFFICULTY,
+    KEY_HASH_RATE,
+    KEY_WORKER_COUNT,
+    UNIT_DIFFICULTY,
+    UNIT_HASH_RATE,
+    UNIT_WORKER_COUNT,
+)
 from .coordinator import PoolConfigEntry, PoolCoordinator
-from .entity import ClientEntity, PoolAddressWorkerDeviceEntity
-
-KEY_WORKER_COUNT = "worker_count"
-KEY_BEST_DIFFICULTY = "best_difficulty"
-KEY_HASH_RATE = "hash_rate"
-KEY_START_TIME = "start_time"
-KEY_LAST_SEEN = "last_seen"
-
-UNIT_WORKER_COUNT = "workers"
-UNIT_HASH_RATE = "TH/s"
-UNIT_DIFFICULTY = "difficulty"
+from .entity import PoolAddressDeviceEntity, PoolAddressWorkerDeviceEntity
 
 # Coordinator is used to centralize the data updates.
 PARALLEL_UPDATES = 0
 
 
 @dataclass(frozen=True, kw_only=True)
-class PoolSensorEntityDescription(SensorEntityDescription):
-    """Class describing Minecraft Server sensor entities."""
+class PoolAddressSensorEntityDescription(SensorEntityDescription):
+    """Class describing Pool Address sensor entities."""
 
-    value_fn: Callable[[ClientData], StateType]
-    attributes_fn: Callable[[ClientData], dict[str, Any]] | None
+    value_fn: Callable[[PoolAddressData], StateType]
 
 
 @dataclass(frozen=True, kw_only=True)
 class PoolAddressWorkerEntityDescription(SensorEntityDescription):
-    """Class describing Minecraft Server sensor entities."""
+    """Class describing Pool Address Worker sensor entities."""
 
-    value_fn: Callable[[WorkerData], StateType]
+    value_fn: Callable[[PoolAddressWorkerData], StateType]
 
 
-SENSOR_DESCRIPTIONS = [
-    PoolSensorEntityDescription(
+ADDRESS_SENSOR_DESCRIPTIONS = [
+    PoolAddressSensorEntityDescription(
         key=KEY_WORKER_COUNT,
         translation_key=KEY_WORKER_COUNT,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UNIT_WORKER_COUNT,
         value_fn=lambda data: data.worker_count,
-        attributes_fn=None,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
-    PoolSensorEntityDescription(
+    PoolAddressSensorEntityDescription(
         key=KEY_BEST_DIFFICULTY,
         translation_key=KEY_BEST_DIFFICULTY,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UNIT_DIFFICULTY,
         value_fn=lambda data: data.best_difficulty,
-        attributes_fn=None,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
 ]
@@ -96,15 +90,15 @@ async def async_setup_entry(
     config_entry: PoolConfigEntry,
     async_add_entities: AddConfigEntryEntitiesCallback,
 ) -> None:
-    """Set up the Minecraft Server sensor platform."""
+    """Set up the Miner Pool sensor platform."""
     coordinator = config_entry.runtime_data
 
     sensors: list[SensorEntity] = []
 
     sensors.extend(
         [
-            PoolClientSensorEntity(coordinator, description, config_entry)
-            for description in SENSOR_DESCRIPTIONS
+            PoolAddressSensorEntity(coordinator, description, config_entry)
+            for description in ADDRESS_SENSOR_DESCRIPTIONS
         ]
     )
 
@@ -121,19 +115,19 @@ async def async_setup_entry(
     async_add_entities(sensors)
 
 
-class PoolClientSensorEntity(ClientEntity, SensorEntity):
-    """Representation of a Minecraft Server sensor base entity."""
+class PoolAddressSensorEntity(PoolAddressDeviceEntity, SensorEntity):
+    """Representation of a Pool Address sensor."""
 
     _attr_has_entity_name = True
-    entity_description: PoolSensorEntityDescription
+    entity_description: PoolAddressSensorEntityDescription
 
     def __init__(
         self,
         coordinator: PoolCoordinator,
-        description: PoolSensorEntityDescription,
+        description: PoolAddressSensorEntityDescription,
         config_entry: PoolConfigEntry,
     ) -> None:
-        """Initialize sensor base entity."""
+        """Initialize the Pool Address sensor."""
         super().__init__(coordinator, config_entry)
         self.entity_description = description
         self._attr_unique_id = f"{config_entry.entry_id}-{description.key}"
@@ -154,12 +148,9 @@ class PoolClientSensorEntity(ClientEntity, SensorEntity):
             self.coordinator.data
         )
 
-        if func := self.entity_description.attributes_fn:
-            self._attr_extra_state_attributes = func(self.coordinator.data)
-
 
 class PoolAddressWorkerSensorEntity(PoolAddressWorkerDeviceEntity, SensorEntity):
-    """Representation of a Minecraft Server sensor base entity."""
+    """Representation of a Pool Address Worker sensor."""
 
     _attr_has_entity_name = True
     entity_description: PoolAddressWorkerEntityDescription
@@ -169,9 +160,9 @@ class PoolAddressWorkerSensorEntity(PoolAddressWorkerDeviceEntity, SensorEntity)
         coordinator: PoolCoordinator,
         description: PoolAddressWorkerEntityDescription,
         config_entry: PoolConfigEntry,
-        worker: WorkerData,
+        worker: PoolAddressWorkerData,
     ) -> None:
-        """Initialize sensor base entity."""
+        """Initialize the Pool Address Worker sensor."""
         super().__init__(coordinator, config_entry, worker.name)
         self.entity_description = description
         self.worker = worker
