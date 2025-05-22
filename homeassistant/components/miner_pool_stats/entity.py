@@ -3,7 +3,7 @@
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, PUBLIC_POOL, WALLET_ADDRESS, WORKER
+from .const import DOMAIN, POOL_SOURCE_PUBLIC_POOL, WALLET_ADDRESS, WORKER
 from .coordinator import PoolConfigEntry, PoolCoordinator
 
 
@@ -22,7 +22,7 @@ class PoolAddressDeviceEntity(CoordinatorEntity[PoolCoordinator]):
 
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, config_entry.entry_id)},
-            manufacturer=PUBLIC_POOL,
+            manufacturer=POOL_SOURCE_PUBLIC_POOL,
             model=WALLET_ADDRESS,
             name=coordinator.name,
         )
@@ -44,7 +44,7 @@ class PoolAddressWorkerDeviceEntity(CoordinatorEntity[PoolCoordinator]):
 
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, f"{config_entry.entry_id}-{worker_name}")},
-            manufacturer=PUBLIC_POOL,
+            manufacturer=POOL_SOURCE_PUBLIC_POOL,
             model=WORKER,
             name=worker_name,
         )

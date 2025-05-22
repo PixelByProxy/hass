@@ -1,7 +1,8 @@
 """Constants for the Miner Pool Stats integration."""
 
 DOMAIN = "miner_pool_stats"
-PUBLIC_POOL = "Public Pool"
+POOL_SOURCE_PUBLIC_POOL = "Public Pool"
+POOL_SOURCE_DX_POOL = "DxPool"
 WALLET_ADDRESS = "Wallet Address"
 WORKER = "Worker"
 
