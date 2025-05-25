@@ -1,9 +1,10 @@
 """Base entity for the Miner Pool Stats integration."""
 
+from homeassistant.const import CONF_FRIENDLY_NAME
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-from .const import DOMAIN, POOL_SOURCE_PUBLIC_POOL, WALLET_ADDRESS, WORKER
+from .const import DOMAIN, WALLET_ADDRESS, WORKER
 from .coordinator import PoolConfigEntry, PoolCoordinator
 
 
@@ -22,7 +23,7 @@ class PoolAddressDeviceEntity(CoordinatorEntity[PoolCoordinator]):
 
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, config_entry.entry_id)},
-            manufacturer=POOL_SOURCE_PUBLIC_POOL,
+            manufacturer=config_entry.data[CONF_FRIENDLY_NAME],
             model=WALLET_ADDRESS,
             name=coordinator.name,
         )
@@ -44,7 +45,7 @@ class PoolAddressWorkerDeviceEntity(CoordinatorEntity[PoolCoordinator]):
 
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, f"{config_entry.entry_id}-{worker_name}")},
-            manufacturer=POOL_SOURCE_PUBLIC_POOL,
+            manufacturer=config_entry.data[CONF_FRIENDLY_NAME],
             model=WORKER,
             name=worker_name,
         )

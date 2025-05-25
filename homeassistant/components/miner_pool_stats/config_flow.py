@@ -8,7 +8,13 @@ from typing import Any
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
-from homeassistant.const import CONF_ADDRESS, CONF_SOURCE, CONF_TYPE, CONF_URL
+from homeassistant.const import (
+    CONF_ADDRESS,
+    CONF_FRIENDLY_NAME,
+    CONF_SOURCE,
+    CONF_TYPE,
+    CONF_URL,
+)
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.selector import (
     SelectOptionDict,
@@ -18,7 +24,13 @@ from homeassistant.helpers.selector import (
 )
 
 from .api import PublicPoolServer, PublicPoolServerConnectionError
-from .const import DOMAIN, POOL_SOURCE_DX_POOL, POOL_SOURCE_PUBLIC_POOL
+from .const import (
+    DOMAIN,
+    POOL_SOURCE_DX_POOL_KEY,
+    POOL_SOURCE_DX_POOL_NAME,
+    POOL_SOURCE_PUBLIC_POOL_KEY,
+    POOL_SOURCE_PUBLIC_POOL_NAME,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -28,12 +40,12 @@ STEP_POOL_SOURCE_SCHEMA = vol.Schema(
             SelectSelectorConfig(
                 options=[
                     SelectOptionDict(
-                        value=POOL_SOURCE_PUBLIC_POOL,
-                        label=POOL_SOURCE_PUBLIC_POOL,
+                        value=POOL_SOURCE_PUBLIC_POOL_KEY,
+                        label=POOL_SOURCE_PUBLIC_POOL_NAME,
                     ),
                     SelectOptionDict(
-                        value=POOL_SOURCE_DX_POOL,
-                        label=POOL_SOURCE_DX_POOL,
+                        value=POOL_SOURCE_DX_POOL_KEY,
+                        label=POOL_SOURCE_DX_POOL_NAME,
                     ),
                 ],
                 mode=SelectSelectorMode.DROPDOWN,
@@ -75,7 +87,7 @@ STEP_WALLET_DATA_SCHEMA = vol.Schema(
 )
 
 
-async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str, Any]:
+async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> str:
     """Validate the user input allows us to connect.
 
     Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
@@ -86,7 +98,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     pool = PublicPoolServer(hass, url, address)
     await pool.async_initialize()
 
-    return {"title": address.lower()}
+    return address.lower()
 
 
 class PoolConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -113,10 +125,12 @@ class PoolConfigFlow(ConfigFlow, domain=DOMAIN):
 
         self._data.update(user_input)
 
-        if user_input[CONF_SOURCE] == POOL_SOURCE_PUBLIC_POOL:
+        if user_input[CONF_SOURCE] == POOL_SOURCE_PUBLIC_POOL_KEY:
+            self._data[CONF_FRIENDLY_NAME] = POOL_SOURCE_PUBLIC_POOL_NAME
             return await self.async_step_public_pool(user_input)
 
-        if user_input[CONF_SOURCE] == POOL_SOURCE_DX_POOL:
+        if user_input[CONF_SOURCE] == POOL_SOURCE_DX_POOL_KEY:
+            self._data[CONF_FRIENDLY_NAME] = POOL_SOURCE_DX_POOL_NAME
             return await self.async_step_dx_pool(user_input)
 
         errors["base"] = "Invalid pool source"
@@ -178,10 +192,11 @@ class PoolConfigFlow(ConfigFlow, domain=DOMAIN):
         self._data.update(user_input)
 
         # abort config flow if service is already configured
-        self._async_abort_entries_match(self._data)
+        match_dict: dict[str, Any] = {CONF_ADDRESS: self._data[CONF_ADDRESS]}
+        self._async_abort_entries_match(match_dict)
 
         try:
-            info = await validate_input(self.hass, self._data)
+            title = await validate_input(self.hass, self._data)
         except PublicPoolServerConnectionError:
             _LOGGER.exception("Connection exception")
             errors["base"] = "cannot_connect"
@@ -189,7 +204,7 @@ class PoolConfigFlow(ConfigFlow, domain=DOMAIN):
             _LOGGER.exception("Unexpected exception")
             errors["base"] = "unknown"
         else:
-            return self.async_create_entry(title=info["title"], data=self._data)
+            return self.async_create_entry(title=title, data=self._data)
 
         return self.async_show_form(
             step_id="wallet", data_schema=STEP_WALLET_DATA_SCHEMA, errors=errors
