@@ -118,7 +118,6 @@ async def async_setup_entry(
 class PoolAddressSensorEntity(PoolAddressDeviceEntity, SensorEntity):
     """Representation of a Pool Address sensor."""
 
-    _attr_has_entity_name = True
     entity_description: PoolAddressSensorEntityDescription
 
     def __init__(
@@ -154,7 +153,6 @@ class PoolAddressSensorEntity(PoolAddressDeviceEntity, SensorEntity):
 class PoolAddressWorkerSensorEntity(PoolAddressWorkerDeviceEntity, SensorEntity):
     """Representation of a Pool Address Worker sensor."""
 
-    _attr_has_entity_name = True
     entity_description: PoolAddressWorkerEntityDescription
 
     def __init__(
