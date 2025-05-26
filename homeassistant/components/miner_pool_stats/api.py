@@ -1,4 +1,4 @@
-"""API for the Minecraft Server integration."""
+"""API for the Miner Pool Stats integration."""
 
 from dataclasses import dataclass
 from datetime import datetime
@@ -11,7 +11,7 @@ from homeassistant.components.recorder import get_instance, history
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 from homeassistant.core import HomeAssistant
 
-from .const import KEY_BEST_DIFFICULTY
+from .const import KEY_BEST_DIFFICULTY, POOL_SOURCE_PUBLIC_POOL_KEY
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -41,11 +41,7 @@ class PoolAddressData:
 
 
 class PublicPoolServerConnectionError(Exception):
-    """Raised when no data can be fetched from the server."""
-
-
-class PublicPoolServerNotInitializedError(Exception):
-    """Raised when APIs are used although server instance is not initialized yet."""
+    """Raised when data can not be fetched from the server."""
 
 
 class PublicPoolServer:
@@ -75,13 +71,7 @@ class PublicPoolServer:
         return True
 
     async def async_get_data(self) -> PoolAddressData:
-        """Get updated data from the server, supporting both Java and Bedrock Edition servers."""
-
-        # check if initialized
-        if self._url is None or self._address is None:
-            raise PublicPoolServerNotInitializedError(
-                f"Server instance with address '{self._address}' is not initialized"
-            )
+        """Get updated data from the pool."""
 
         url = f"{self._url.rstrip('/')}/api/client/{self._address}"
         _LOGGER.debug("Fetching workers from %s", url)
@@ -170,9 +160,7 @@ class PublicPoolServer:
     async def _get_max_best_difficulty(self, worker_name: str) -> float:
         """Get the maximum value for a sensor."""
 
-        entity_id = (
-            f"{SENSOR_DOMAIN}.{self._address}_{worker_name}_{KEY_BEST_DIFFICULTY}"
-        )
+        entity_id = f"{SENSOR_DOMAIN}.{POOL_SOURCE_PUBLIC_POOL_KEY}_{self._address.lower()}_{worker_name}_{KEY_BEST_DIFFICULTY}"
 
         val = await get_instance(self._hass).async_add_executor_job(
             partial(
