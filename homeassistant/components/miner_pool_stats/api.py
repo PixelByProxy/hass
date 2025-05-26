@@ -12,6 +12,7 @@ from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 from homeassistant.core import HomeAssistant
 
 from .const import KEY_BEST_DIFFICULTY, POOL_SOURCE_PUBLIC_POOL_KEY
+from .hash import HashRate, HashRateUnit
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -88,9 +89,7 @@ class PublicPoolServer:
                         worker = PoolAddressWorkerData(
                             name=workerJson["name"],
                             best_difficulty=float(workerJson["bestDifficulty"]),
-                            hash_rate=self._calc_tera_hash(
-                                float(workerJson["hashRate"])
-                            ),
+                            hash_rate=float(workerJson["hashRate"]),
                             start_time=datetime.fromisoformat(workerJson["startTime"]),
                             last_seen=datetime.fromisoformat(workerJson["lastSeen"]),
                         )
@@ -117,6 +116,13 @@ class PublicPoolServer:
                             )
                         else:
                             workers[worker.name] = worker
+
+                        # convert hash rate to TH/s
+                        workers[worker.name].hash_rate = (
+                            HashRate.from_number(workers[worker.name].hash_rate)
+                            .to_unit(HashRateUnit.TH)
+                            .value
+                        )
 
                     # if there are no workers, log a warning
                     if not workers:
@@ -150,12 +156,6 @@ class PublicPoolServer:
             return repr(error)
 
         return str(error)
-
-    def _calc_tera_hash(self, hash_rate: float) -> float:
-        """Convert hash rate to TH/s."""
-        if hash_rate <= 0:
-            return 0
-        return round(hash_rate / 1_000_000_000_000, 1)
 
     async def _get_max_best_difficulty(self, worker_name: str) -> float:
         """Get the maximum value for a sensor."""
