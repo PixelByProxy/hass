@@ -13,6 +13,7 @@ from homeassistant.const import (
     CONF_FRIENDLY_NAME,
     CONF_SOURCE,
     CONF_TYPE,
+    CONF_UNIQUE_ID,
     CONF_URL,
 )
 from homeassistant.core import HomeAssistant
@@ -92,13 +93,15 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> str:
 
     Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
     """
+    pool = data[CONF_FRIENDLY_NAME]
     url = data[CONF_URL]
     address = data[CONF_ADDRESS]
+    title = f"{pool} - {address}"
 
     pool = PublicPoolServer(hass, url, address)
     await pool.async_initialize()
 
-    return address.lower()
+    return title
 
 
 class PoolConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -191,8 +194,14 @@ class PoolConfigFlow(ConfigFlow, domain=DOMAIN):
 
         self._data.update(user_input)
 
+        # set the unique id
+        unique_id = f"{self._data[CONF_SOURCE]}_{self._data[CONF_ADDRESS].lower()}"
+        self._data[CONF_UNIQUE_ID] = unique_id
+
         # abort config flow if service is already configured
-        match_dict: dict[str, Any] = {CONF_ADDRESS: self._data[CONF_ADDRESS]}
+        match_dict: dict[str, Any] = {
+            CONF_UNIQUE_ID: unique_id,
+        }
         self._async_abort_entries_match(match_dict)
 
         try:

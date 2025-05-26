@@ -11,7 +11,7 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import EntityCategory
+from homeassistant.const import CONF_UNIQUE_ID, EntityCategory
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import StateType
@@ -132,7 +132,9 @@ class PoolAddressSensorEntity(PoolAddressDeviceEntity, SensorEntity):
         self.entity_description = description
         self._attr_unique_id = f"{config_entry.entry_id}-{description.key}"
         self._attr_translation_key = description.translation_key
-        self.entity_id = f"{SENSOR_DOMAIN}.{config_entry.title}_{description.key}"
+        self.entity_id = (
+            f"{SENSOR_DOMAIN}.{config_entry.data[CONF_UNIQUE_ID]}_{description.key}"
+        )
         self._update_properties()
 
     @callback
@@ -170,9 +172,7 @@ class PoolAddressWorkerSensorEntity(PoolAddressWorkerDeviceEntity, SensorEntity)
             f"{config_entry.entry_id}-{worker.name}-{description.key}"
         )
         self._attr_translation_key = description.translation_key
-        self.entity_id = (
-            f"{SENSOR_DOMAIN}.{config_entry.title}_{worker.name}_{description.key}"
-        )
+        self.entity_id = f"{SENSOR_DOMAIN}.{config_entry.data[CONF_UNIQUE_ID]}_{worker.name}_{description.key}"
         self._update_properties()
 
     @callback
