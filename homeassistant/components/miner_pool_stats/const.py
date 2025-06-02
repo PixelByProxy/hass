@@ -1,11 +1,13 @@
 """Constants for the Miner Pool Stats integration."""
 
+from enum import StrEnum
+
 DOMAIN = "miner_pool_stats"
 
 POOL_SOURCE_PUBLIC_POOL_KEY = "public_pool"
 POOL_SOURCE_PUBLIC_POOL_NAME = "Public Pool"
-POOL_SOURCE_DX_POOL_KEY = "dx_pool"
-POOL_SOURCE_DX_POOL_NAME = "DxPool"
+POOL_SOURCE_F2_POOL_KEY = "f2_pool"
+POOL_SOURCE_F2_POOL_NAME = "f2pool"
 
 WALLET_ADDRESS = "Wallet Address"
 WORKER = "Worker"
@@ -19,3 +21,13 @@ KEY_LAST_SEEN = "last_seen"
 UNIT_WORKER_COUNT = "workers"
 UNIT_HASH_RATE = "TH/s"
 UNIT_DIFFICULTY = "difficulty"
+
+
+class CryptoCoinsF2Pool(StrEnum):
+    """List of supported crypto coins."""
+
+    BTC = "bitcoin"
+    BCH = "bitcoin-cash"
+    LTC = "litecoin"
+    ALEO = "aleo"
+    KAS = "kaspa"

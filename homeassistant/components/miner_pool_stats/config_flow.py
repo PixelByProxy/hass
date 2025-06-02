@@ -27,10 +27,11 @@ from homeassistant.helpers.selector import (
 from .api import PublicPoolServer, PublicPoolServerConnectionError
 from .const import (
     DOMAIN,
-    POOL_SOURCE_DX_POOL_KEY,
-    POOL_SOURCE_DX_POOL_NAME,
+    POOL_SOURCE_F2_POOL_KEY,
+    POOL_SOURCE_F2_POOL_NAME,
     POOL_SOURCE_PUBLIC_POOL_KEY,
     POOL_SOURCE_PUBLIC_POOL_NAME,
+    CryptoCoinsF2Pool,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -45,8 +46,8 @@ STEP_POOL_SOURCE_SCHEMA = vol.Schema(
                         label=POOL_SOURCE_PUBLIC_POOL_NAME,
                     ),
                     SelectOptionDict(
-                        value=POOL_SOURCE_DX_POOL_KEY,
-                        label=POOL_SOURCE_DX_POOL_NAME,
+                        value=POOL_SOURCE_F2_POOL_KEY,
+                        label=POOL_SOURCE_F2_POOL_NAME,
                     ),
                 ],
                 mode=SelectSelectorMode.DROPDOWN,
@@ -58,26 +59,6 @@ STEP_POOL_SOURCE_SCHEMA = vol.Schema(
 STEP_PUBLIC_POOL_DATA_SCHEMA = vol.Schema(
     {
         vol.Required(CONF_URL, default="https://web.public-pool.io/"): str,
-    }
-)
-
-STEP_DX_POOL_DATA_SCHEMA = vol.Schema(
-    {
-        vol.Required(CONF_TYPE): SelectSelector(
-            SelectSelectorConfig(
-                options=[
-                    SelectOptionDict(
-                        value="LTC",
-                        label="LTC",
-                    ),
-                    SelectOptionDict(
-                        value="ALEO",
-                        label="ALEO",
-                    ),
-                ],
-                mode=SelectSelectorMode.DROPDOWN,
-            )
-        )
     }
 )
 
@@ -132,9 +113,9 @@ class PoolConfigFlow(ConfigFlow, domain=DOMAIN):
             self._data[CONF_FRIENDLY_NAME] = POOL_SOURCE_PUBLIC_POOL_NAME
             return await self.async_step_public_pool(user_input)
 
-        if user_input[CONF_SOURCE] == POOL_SOURCE_DX_POOL_KEY:
-            self._data[CONF_FRIENDLY_NAME] = POOL_SOURCE_DX_POOL_NAME
-            return await self.async_step_dx_pool(user_input)
+        if user_input[CONF_SOURCE] == POOL_SOURCE_F2_POOL_KEY:
+            self._data[CONF_FRIENDLY_NAME] = POOL_SOURCE_F2_POOL_NAME
+            return await self.async_step_f2_pool(user_input)
 
         errors["base"] = "Invalid pool source"
 
@@ -160,17 +141,33 @@ class PoolConfigFlow(ConfigFlow, domain=DOMAIN):
 
         return await self.async_step_wallet(user_input)
 
-    async def async_step_dx_pool(
+    async def async_step_f2_pool(
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
-        """Handle the dx pool step."""
+        """Handle the f2pool step."""
         errors: dict[str, str] = {}
 
         # if the user input CONF_URL is None, show the form
         if user_input is None or user_input.get(CONF_TYPE) is None:
+            coins: list[SelectOptionDict] = [
+                SelectOptionDict(value=coin.value, label=coin.name)
+                for coin in CryptoCoinsF2Pool
+            ]
+
+            coin_schema = vol.Schema(
+                {
+                    vol.Required(CONF_TYPE): SelectSelector(
+                        SelectSelectorConfig(
+                            options=coins,
+                            mode=SelectSelectorMode.DROPDOWN,
+                        )
+                    )
+                }
+            )
+
             return self.async_show_form(
-                step_id="dx_pool",
-                data_schema=STEP_DX_POOL_DATA_SCHEMA,
+                step_id="f2_pool",
+                data_schema=coin_schema,
                 errors=errors,
             )
 
