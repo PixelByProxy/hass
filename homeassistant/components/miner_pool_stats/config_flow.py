@@ -24,7 +24,6 @@ from homeassistant.helpers.selector import (
     SelectSelectorMode,
 )
 
-from .api import PublicPoolServer, PublicPoolServerConnectionError
 from .const import (
     DOMAIN,
     POOL_SOURCE_F2_POOL_KEY,
@@ -33,6 +32,8 @@ from .const import (
     POOL_SOURCE_PUBLIC_POOL_NAME,
     CryptoCoinsF2Pool,
 )
+from .factory import PoolFactory
+from .pool import PublicPoolServerConnectionError
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -75,11 +76,10 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> str:
     Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
     """
     pool = data[CONF_FRIENDLY_NAME]
-    url = data[CONF_URL]
     address = data[CONF_ADDRESS]
     title = f"{pool} - {address}"
 
-    pool = PublicPoolServer(hass, url, address)
+    pool = PoolFactory.get(hass, data)
     await pool.async_initialize()
 
     return title

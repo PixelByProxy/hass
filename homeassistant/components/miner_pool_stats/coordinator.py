@@ -4,13 +4,13 @@ from datetime import timedelta
 import logging
 
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_ADDRESS, CONF_URL
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
-from .api import PoolAddressData, PublicPoolServer, PublicPoolServerConnectionError
+from .factory import PoolFactory
+from .pool import PoolAddressData, PoolClient, PublicPoolServerConnectionError
 
 type PoolConfigEntry = ConfigEntry[PoolCoordinator]
 
@@ -23,7 +23,7 @@ REQUEST_REFRESH_DEFAULT_COOLDOWN = 5
 class PoolCoordinator(DataUpdateCoordinator[PoolAddressData]):
     """Coordinator for Pool."""
 
-    _api: PublicPoolServer
+    _api: PoolClient
 
     def __init__(self, hass: HomeAssistant, entry: PoolConfigEntry) -> None:
         """Initialize PoolCoordinator object."""
@@ -47,11 +47,8 @@ class PoolCoordinator(DataUpdateCoordinator[PoolAddressData]):
     async def _async_setup(self) -> None:
         """Set up the Pool coordinator."""
 
-        url = self._entry.data[CONF_URL]
-        address = self._entry.data[CONF_ADDRESS]
-
         # create API instance
-        self._api = PublicPoolServer(self._hass, url, address)
+        self._api = PoolFactory.get(self._hass, dict(self._entry.data))
 
         # validate the connection
         try:

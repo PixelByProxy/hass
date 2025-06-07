@@ -16,7 +16,6 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import StateType
 
-from .api import PoolAddressData, PoolAddressWorkerData
 from .const import (
     KEY_BEST_DIFFICULTY,
     KEY_HASH_RATE,
@@ -27,6 +26,7 @@ from .const import (
 )
 from .coordinator import PoolConfigEntry, PoolCoordinator
 from .entity import PoolAddressDeviceEntity, PoolAddressWorkerDeviceEntity
+from .pool import PoolAddressData, PoolAddressWorkerData
 
 # Coordinator is used to centralize the data updates.
 PARALLEL_UPDATES = 0

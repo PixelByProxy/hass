@@ -1,18 +1,22 @@
-"""API for the Miner Pool Stats integration."""
+"""Public Pool Client for the Miner Pool Stats integration."""
 
-from dataclasses import dataclass
-from datetime import datetime
-from functools import partial
+from datetime import datetime, timedelta
 import logging
+from typing import Any
 
 from aiohttp import ClientError, ClientSession
 
-from homeassistant.components.recorder import get_instance, history
-from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
+from homeassistant.const import CONF_ADDRESS, CONF_URL
 from homeassistant.core import HomeAssistant
+from homeassistant.util.dt import as_utc, now
 
-from .const import KEY_BEST_DIFFICULTY, POOL_SOURCE_PUBLIC_POOL_KEY
 from .hash import HashRate, HashRateUnit
+from .pool import (
+    PoolAddressData,
+    PoolAddressWorkerData,
+    PoolClient,
+    PublicPoolServerConnectionError,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -21,41 +25,17 @@ DATA_UPDATE_TIMEOUT: float = 10
 DATA_UPDATE_RETRIES: int = 3
 
 
-@dataclass
-class PoolAddressWorkerData:
-    """Representation of Pool address worker data."""
+class PublicPoolClient(PoolClient):
+    """Public Pool Client API."""
 
-    name: str
-    best_difficulty: float
-    hash_rate: float
-    start_time: datetime
-    last_seen: datetime
-
-
-@dataclass
-class PoolAddressData:
-    """Representation of Pool address data."""
-
-    best_difficulty: float
-    worker_count: int
-    worker_list: list[PoolAddressWorkerData]
-
-
-class PublicPoolServerConnectionError(Exception):
-    """Raised when data can not be fetched from the server."""
-
-
-class PublicPoolServer:
-    """Public Pool Server API."""
-
-    def __init__(self, hass: HomeAssistant, url: str, address: str) -> None:
-        """Initialize server instance."""
-        self._hass = hass
-        self._url = url
-        self._address = address
+    def __init__(self, hass: HomeAssistant, config_data: dict[str, Any]) -> None:
+        """Initialize the client instance."""
+        super().__init__(hass, config_data)
+        self._url = config_data[CONF_URL]
+        self._address = config_data[CONF_ADDRESS]
 
     async def async_initialize(self) -> None:
-        """Perform async initialization of server instance."""
+        """Perform async initialization of client instance."""
         await self.async_get_data()
 
     async def async_is_online(self) -> bool:
@@ -86,17 +66,20 @@ class PublicPoolServer:
                     # if the worker exists, combine the data
                     workers: dict[str, PoolAddressWorkerData] = {}
                     for workerJson in json["workers"]:
+                        last_seen = datetime.fromisoformat(workerJson["lastSeen"])
+                        current_time = as_utc(now())
+                        is_online = current_time - last_seen < timedelta(minutes=30)
+
                         worker = PoolAddressWorkerData(
                             name=workerJson["name"],
                             best_difficulty=float(workerJson["bestDifficulty"]),
                             hash_rate=float(workerJson["hashRate"]),
-                            start_time=datetime.fromisoformat(workerJson["startTime"]),
-                            last_seen=datetime.fromisoformat(workerJson["lastSeen"]),
+                            is_online=is_online,
                         )
 
                         # get the maximum stored for the best difficulty
                         state_best_difficulty = await self._get_max_best_difficulty(
-                            worker.name
+                            self._config_data, worker.name
                         )
                         worker.best_difficulty = max(
                             worker.best_difficulty, state_best_difficulty
@@ -108,11 +91,8 @@ class PublicPoolServer:
                                 workers[worker.name].best_difficulty,
                                 worker.best_difficulty,
                             )
-                            workers[worker.name].last_seen = max(
-                                workers[worker.name].last_seen, worker.last_seen
-                            )
-                            workers[worker.name].start_time = min(
-                                workers[worker.name].start_time, worker.start_time
+                            workers[worker.name].is_online = (
+                                workers[worker.name].is_online or worker.is_online
                             )
                         else:
                             workers[worker.name] = worker
@@ -148,43 +128,3 @@ class PublicPoolServer:
             raise PublicPoolServerConnectionError(
                 f"Lookup of '{self._address}' failed: {self._get_error_message(error)}"
             ) from error
-
-    def _get_error_message(self, error: BaseException) -> str:
-        """Get error message of an exception."""
-        if not str(error):
-            # Fallback to error type in case of an empty error message.
-            return repr(error)
-
-        return str(error)
-
-    async def _get_max_best_difficulty(self, worker_name: str) -> float:
-        """Get the maximum value for a sensor."""
-
-        entity_id = f"{SENSOR_DOMAIN}.{POOL_SOURCE_PUBLIC_POOL_KEY}_{self._address.lower()}_{worker_name}_{KEY_BEST_DIFFICULTY}"
-
-        val = await get_instance(self._hass).async_add_executor_job(
-            partial(
-                history.get_last_state_changes,
-                self._hass,
-                1,
-                entity_id=entity_id,
-            )
-        )
-
-        if val is not None:
-            states = val.get(entity_id)
-            if states is not None and len(states) > 0:
-                for state in states:
-                    if state.state is not None and self.is_float(state.state):
-                        return float(state.state)
-
-        return 0.0
-
-    def is_float(self, string_value: str) -> bool:
-        """Check if a string can be converted to a float."""
-        try:
-            float(string_value)
-        except ValueError:
-            return False
-        else:
-            return True
