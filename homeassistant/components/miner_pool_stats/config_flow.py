@@ -10,6 +10,7 @@ import voluptuous as vol
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import (
     CONF_ADDRESS,
+    CONF_API_KEY,
     CONF_FRIENDLY_NAME,
     CONF_SOURCE,
     CONF_TYPE,
@@ -148,7 +149,11 @@ class PoolConfigFlow(ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
 
         # if the user input CONF_URL is None, show the form
-        if user_input is None or user_input.get(CONF_TYPE) is None:
+        if (
+            user_input is None
+            or user_input.get(CONF_TYPE) is None
+            or user_input.get(CONF_API_KEY) is None
+        ):
             coins: list[SelectOptionDict] = [
                 SelectOptionDict(value=coin.value, label=coin.name)
                 for coin in CryptoCoinsF2Pool
@@ -161,7 +166,8 @@ class PoolConfigFlow(ConfigFlow, domain=DOMAIN):
                             options=coins,
                             mode=SelectSelectorMode.DROPDOWN,
                         )
-                    )
+                    ),
+                    vol.Required(CONF_API_KEY): str,
                 }
             )
 

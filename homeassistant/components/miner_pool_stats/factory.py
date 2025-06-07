@@ -5,8 +5,9 @@ from typing import Any
 from homeassistant.const import CONF_SOURCE
 from homeassistant.core import HomeAssistant
 
-from .const import POOL_SOURCE_PUBLIC_POOL_KEY
+from .const import POOL_SOURCE_F2_POOL_KEY, POOL_SOURCE_PUBLIC_POOL_KEY
 from .pool import PoolClient
+from .pool_f2 import F2PoolClient
 from .pool_public import PublicPoolClient
 
 
@@ -21,5 +22,7 @@ class PoolFactory:
 
         if source == POOL_SOURCE_PUBLIC_POOL_KEY:
             return PublicPoolClient(hass, config_data)
+        if source == POOL_SOURCE_F2_POOL_KEY:
+            return F2PoolClient(hass, config_data)
 
         raise ValueError(f"Unsupported pool source: {source}")
