@@ -15,7 +15,7 @@ from .pool import (
     PoolAddressData,
     PoolAddressWorkerData,
     PoolClient,
-    PublicPoolServerConnectionError,
+    PoolConnectionError,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -42,7 +42,7 @@ class PublicPoolClient(PoolClient):
         """Check if the server is online, supporting both Java and Bedrock Edition servers."""
         try:
             await self.async_get_data()
-        except PublicPoolServerConnectionError as error:
+        except PoolConnectionError as error:
             _LOGGER.debug(
                 "Connection check failed: %s",
                 self._get_error_message(error),
@@ -121,10 +121,10 @@ class PublicPoolClient(PoolClient):
                         list(workers.values()),
                     )
 
-                raise PublicPoolServerConnectionError(
+                raise PoolConnectionError(
                     f"Lookup of '{self._address}' failed: Status code {response.status}"
                 )
         except ClientError as error:
-            raise PublicPoolServerConnectionError(
+            raise PoolConnectionError(
                 f"Lookup of '{self._address}' failed: {self._get_error_message(error)}"
             ) from error

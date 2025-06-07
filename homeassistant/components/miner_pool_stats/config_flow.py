@@ -33,7 +33,7 @@ from .const import (
     CryptoCoinsF2Pool,
 )
 from .factory import PoolFactory
-from .pool import PublicPoolServerConnectionError
+from .pool import PoolConnectionError
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -203,7 +203,7 @@ class PoolConfigFlow(ConfigFlow, domain=DOMAIN):
 
         try:
             title = await validate_input(self.hass, self._data)
-        except PublicPoolServerConnectionError:
+        except PoolConnectionError:
             _LOGGER.exception("Connection exception")
             errors["base"] = "cannot_connect"
         except Exception:

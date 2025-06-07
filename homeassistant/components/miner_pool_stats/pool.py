@@ -13,7 +13,7 @@ from homeassistant.core import HomeAssistant
 from .const import KEY_BEST_DIFFICULTY
 
 
-class PublicPoolServerConnectionError(Exception):
+class PoolConnectionError(Exception):
     """Raised when data can not be fetched from the server."""
 
 

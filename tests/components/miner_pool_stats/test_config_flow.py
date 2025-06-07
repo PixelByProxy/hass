@@ -3,10 +3,8 @@
 from unittest.mock import AsyncMock, patch
 
 from homeassistant import config_entries
-from homeassistant.components.miner_pool_stats.api import (
-    PublicPoolServerConnectionError,
-)
 from homeassistant.components.miner_pool_stats.const import DOMAIN
+from homeassistant.components.miner_pool_stats.pool import PoolConnectionError
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
 from homeassistant.data_entry_flow import FlowResultType
@@ -54,7 +52,7 @@ async def test_form_cannot_connect(
 
     with patch(
         "homeassistant.components.miner_pool_stats.config_flow.PlaceholderHub.authenticate",
-        side_effect=PublicPoolServerConnectionError,
+        side_effect=PoolConnectionError,
     ):
         result = await hass.config_entries.flow.async_configure(
             result["flow_id"],

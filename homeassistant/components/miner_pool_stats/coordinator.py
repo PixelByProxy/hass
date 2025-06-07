@@ -10,7 +10,7 @@ from homeassistant.helpers.debounce import Debouncer
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .factory import PoolFactory
-from .pool import PoolAddressData, PoolClient, PublicPoolServerConnectionError
+from .pool import PoolAddressData, PoolClient, PoolConnectionError
 
 type PoolConfigEntry = ConfigEntry[PoolCoordinator]
 
@@ -53,12 +53,12 @@ class PoolCoordinator(DataUpdateCoordinator[PoolAddressData]):
         # validate the connection
         try:
             return await self._api.async_initialize()
-        except PublicPoolServerConnectionError as error:
+        except PoolConnectionError as error:
             raise ConfigEntryNotReady(f"Unable to load pool data: {error}") from error
 
     async def _async_update_data(self) -> PoolAddressData:
         """Get updated data from the server."""
         try:
             return await self._api.async_get_data()
-        except PublicPoolServerConnectionError as error:
+        except PoolConnectionError as error:
             raise UpdateFailed(error) from error
