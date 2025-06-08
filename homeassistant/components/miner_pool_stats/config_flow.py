@@ -31,7 +31,10 @@ from .const import (
     POOL_SOURCE_F2_POOL_NAME,
     POOL_SOURCE_PUBLIC_POOL_KEY,
     POOL_SOURCE_PUBLIC_POOL_NAME,
+    POOL_SOURCE_SOLO_POOL_KEY,
+    POOL_SOURCE_SOLO_POOL_NAME,
     CryptoCoinsF2Pool,
+    CryptoCoinsSoloPool,
 )
 from .factory import PoolFactory
 from .pool import PoolConnectionError
@@ -50,6 +53,10 @@ STEP_POOL_SOURCE_SCHEMA = vol.Schema(
                     SelectOptionDict(
                         value=POOL_SOURCE_F2_POOL_KEY,
                         label=POOL_SOURCE_F2_POOL_NAME,
+                    ),
+                    SelectOptionDict(
+                        value=POOL_SOURCE_SOLO_POOL_KEY,
+                        label=POOL_SOURCE_SOLO_POOL_NAME,
                     ),
                 ],
                 mode=SelectSelectorMode.DROPDOWN,
@@ -118,6 +125,10 @@ class PoolConfigFlow(ConfigFlow, domain=DOMAIN):
             self._data[CONF_FRIENDLY_NAME] = POOL_SOURCE_F2_POOL_NAME
             return await self.async_step_f2_pool(user_input)
 
+        if user_input[CONF_SOURCE] == POOL_SOURCE_SOLO_POOL_KEY:
+            self._data[CONF_FRIENDLY_NAME] = POOL_SOURCE_SOLO_POOL_NAME
+            return await self.async_step_solo_pool(user_input)
+
         errors["base"] = "Invalid pool source"
 
         return self.async_show_form(
@@ -173,6 +184,40 @@ class PoolConfigFlow(ConfigFlow, domain=DOMAIN):
 
             return self.async_show_form(
                 step_id="f2_pool",
+                data_schema=coin_schema,
+                errors=errors,
+            )
+
+        self._data.update(user_input)
+
+        return await self.async_step_wallet(user_input)
+
+    async def async_step_solo_pool(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Handle the SoloPool step."""
+        errors: dict[str, str] = {}
+
+        # if the user input CONF_URL is None, show the form
+        if user_input is None or user_input.get(CONF_TYPE) is None:
+            coins: list[SelectOptionDict] = [
+                SelectOptionDict(value=coin.value, label=coin.name)
+                for coin in CryptoCoinsSoloPool
+            ]
+
+            coin_schema = vol.Schema(
+                {
+                    vol.Required(CONF_TYPE): SelectSelector(
+                        SelectSelectorConfig(
+                            options=coins,
+                            mode=SelectSelectorMode.DROPDOWN,
+                        )
+                    ),
+                }
+            )
+
+            return self.async_show_form(
+                step_id="solo_pool",
                 data_schema=coin_schema,
                 errors=errors,
             )
