@@ -27,14 +27,15 @@ from homeassistant.helpers.selector import (
 
 from .const import (
     DOMAIN,
+    POOL_SOURCE_F2_POOL_COINS,
     POOL_SOURCE_F2_POOL_KEY,
     POOL_SOURCE_F2_POOL_NAME,
     POOL_SOURCE_PUBLIC_POOL_KEY,
     POOL_SOURCE_PUBLIC_POOL_NAME,
+    POOL_SOURCE_SOLO_POOL_COINS,
     POOL_SOURCE_SOLO_POOL_KEY,
     POOL_SOURCE_SOLO_POOL_NAME,
-    CryptoCoinsF2Pool,
-    CryptoCoinsSoloPool,
+    CryptoCoin,
 )
 from .factory import PoolFactory
 from .pool import PoolConnectionError
@@ -85,7 +86,8 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> str:
     """
     pool = data[CONF_FRIENDLY_NAME]
     address = data[CONF_ADDRESS]
-    title = f"{pool} - {address}"
+    coin = CryptoCoin(data[CONF_TYPE]).name
+    title = f"{pool} - {coin} - {address}"
 
     pool = PoolFactory.get(hass, data)
     await pool.async_initialize()
@@ -150,6 +152,7 @@ class PoolConfigFlow(ConfigFlow, domain=DOMAIN):
             )
 
         self._data.update(user_input)
+        self._data[CONF_TYPE] = CryptoCoin.BTC.value
 
         return await self.async_step_wallet(user_input)
 
@@ -167,7 +170,7 @@ class PoolConfigFlow(ConfigFlow, domain=DOMAIN):
         ):
             coins: list[SelectOptionDict] = [
                 SelectOptionDict(value=coin.value, label=coin.name)
-                for coin in CryptoCoinsF2Pool
+                for coin in POOL_SOURCE_F2_POOL_COINS
             ]
 
             coin_schema = vol.Schema(
@@ -202,7 +205,7 @@ class PoolConfigFlow(ConfigFlow, domain=DOMAIN):
         if user_input is None or user_input.get(CONF_TYPE) is None:
             coins: list[SelectOptionDict] = [
                 SelectOptionDict(value=coin.value, label=coin.name)
-                for coin in CryptoCoinsSoloPool
+                for coin in POOL_SOURCE_SOLO_POOL_COINS
             ]
 
             coin_schema = vol.Schema(
@@ -243,7 +246,7 @@ class PoolConfigFlow(ConfigFlow, domain=DOMAIN):
         self._data.update(user_input)
 
         # set the unique id
-        unique_id = f"{self._data[CONF_SOURCE]}_{self._data[CONF_ADDRESS].lower()}"
+        unique_id = f"{self._data[CONF_SOURCE]}_{self._data[CONF_TYPE]}_{self._data[CONF_ADDRESS].lower()}"
         self._data[CONF_UNIQUE_ID] = unique_id
 
         # abort config flow if service is already configured

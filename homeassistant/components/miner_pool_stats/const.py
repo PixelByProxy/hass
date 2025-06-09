@@ -25,52 +25,90 @@ UNIT_HASH_RATE = "TH/s"
 UNIT_DIFFICULTY = "difficulty"
 
 
-class CryptoCoinsF2Pool(StrEnum):
-    """List of supported crypto coins by f2pool."""
-
-    BTC = "bitcoin"
-    BCH = "bitcoin-cash"
-    ALEO = "aleo"
-    BELLS = "bells-mm"
-    CFX = "conflux"
-    CKB = "nervos"
-    DASH = "dash"
-    ELA = "elacoin"
-    ETC = "ethereum-classic"
-    EHHW = "ethw"
-    FB = "fractal-bitcoin"
-    IRON = "iron-fish"
-    HTR = "hathor"
-    JKC = "junkcoin"
-    KDA = "kadena"
-    KAS = "kaspa"
-    LTC = "litecoin"
-    LKY = "luckycoin"
-    NEXA = "nexa"
-    NMC = "nmccoin"
-    PEP = "pepecoin"
-    ZEC = "zcash"
-    ZEN = "zen"
-
-
-class CryptoCoinsSoloPool(StrEnum):
-    """List of supported crypto coins by Solo Pool."""
+class CryptoCoin(StrEnum):
+    """List of crypto coins."""
 
     BTC = "btc"
     BCH = "bch"
+    ALEO = "aleo"
+    BELLS = "bells"
     BTG = "btg"
+    CFX = "cfx"
+    CKB = "ckb"
     CLORE = "clore"
+    DASH = "dash"
+    ELA = "ela"
+    EHHW = "ehhw"
+    FB = "fb"
     ERG = "erg"
     ETC = "etc"
     ETHW = "ethw"
-    FB = "fb"
+    HTR = "htr"
+    IRON = "iron"
+    JKC = "jkc"
     KAS = "kas"
+    KDA = "kda"
+    LTC = "ltc"
+    LKY = "lky"
     NEOX = "neox"
+    NEXA = "nexa"
+    NMC = "nmc"
     OCTA = "octa"
+    PEP = "pep"
     RVN = "rvn"
     SDR = "sdr"
     XNA = "xna"
     XEC = "xec"
     XEL = "xel"
     XMR = "xmr"
+    ZEC = "zec"
+    ZEN = "zen"
     ZEPH = "zeph"
+
+
+POOL_SOURCE_F2_POOL_COINS = [
+    CryptoCoin.BTC,
+    CryptoCoin.BCH,
+    CryptoCoin.ALEO,
+    CryptoCoin.BELLS,
+    CryptoCoin.CFX,
+    CryptoCoin.CKB,
+    CryptoCoin.DASH,
+    CryptoCoin.ELA,
+    CryptoCoin.ETC,
+    CryptoCoin.EHHW,
+    CryptoCoin.FB,
+    CryptoCoin.IRON,
+    CryptoCoin.HTR,
+    CryptoCoin.JKC,
+    CryptoCoin.KDA,
+    CryptoCoin.KAS,
+    CryptoCoin.LTC,
+    CryptoCoin.LKY,
+    CryptoCoin.NEXA,
+    CryptoCoin.NMC,
+    CryptoCoin.PEP,
+    CryptoCoin.ZEC,
+    CryptoCoin.ZEN,
+]
+
+POOL_SOURCE_SOLO_POOL_COINS = [
+    CryptoCoin.BTC,
+    CryptoCoin.BCH,
+    CryptoCoin.BTG,
+    CryptoCoin.CLORE,
+    CryptoCoin.ERG,
+    CryptoCoin.ETC,
+    CryptoCoin.ETHW,
+    CryptoCoin.FB,
+    CryptoCoin.KAS,
+    CryptoCoin.NEOX,
+    CryptoCoin.OCTA,
+    CryptoCoin.RVN,
+    CryptoCoin.SDR,
+    CryptoCoin.XNA,
+    CryptoCoin.XEC,
+    CryptoCoin.XEL,
+    CryptoCoin.XMR,
+    CryptoCoin.ZEPH,
+]

@@ -10,6 +10,7 @@ from homeassistant.const import CONF_ADDRESS, CONF_API_KEY, CONF_TYPE
 from homeassistant.core import HomeAssistant
 from homeassistant.util.dt import as_utc, now
 
+from .const import CryptoCoin
 from .hash import HashRate, HashRateUnit
 from .pool import (
     PoolAddressData,
@@ -23,6 +24,32 @@ _LOGGER = logging.getLogger(__name__)
 LOOKUP_TIMEOUT: float = 10
 DATA_UPDATE_TIMEOUT: float = 10
 DATA_UPDATE_RETRIES: int = 3
+
+POOL_COIN_URI_PATHS = {
+    CryptoCoin.BTC: "bitcoin",
+    CryptoCoin.BCH: "bitcoin-cash",
+    CryptoCoin.ALEO: "aleo",
+    CryptoCoin.BELLS: "bells-mm",
+    CryptoCoin.CFX: "conflux",
+    CryptoCoin.CKB: "nervos",
+    CryptoCoin.DASH: "dash",
+    CryptoCoin.ELA: "elacoin",
+    CryptoCoin.ETC: "ethereum-classic",
+    CryptoCoin.EHHW: "ethw",
+    CryptoCoin.FB: "fractal-bitcoin",
+    CryptoCoin.IRON: "iron-fish",
+    CryptoCoin.HTR: "hathor",
+    CryptoCoin.JKC: "junkcoin",
+    CryptoCoin.KDA: "kadena",
+    CryptoCoin.KAS: "kaspa",
+    CryptoCoin.LTC: "litecoin",
+    CryptoCoin.LKY: "luckycoin",
+    CryptoCoin.NEXA: "nexa",
+    CryptoCoin.NMC: "nmccoin",
+    CryptoCoin.PEP: "pepecoin",
+    CryptoCoin.ZEC: "zcash",
+    CryptoCoin.ZEN: "zen",
+}
 
 
 class F2PoolClient(PoolClient):
@@ -55,7 +82,8 @@ class F2PoolClient(PoolClient):
     async def async_get_data(self) -> PoolAddressData:
         """Get updated data from the pool."""
 
-        url = f"https://api.f2pool.com/{self._coin_type}/{self._address}"
+        coin_path = POOL_COIN_URI_PATHS[self._coin_type]
+        url = f"https://api.f2pool.com/{coin_path}/{self._address}"
         _LOGGER.debug("Fetching workers from %s", url)
 
         headers = {"F2P-API-SECRET": self._api_key, "Content-Type": "application/json"}

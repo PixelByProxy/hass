@@ -7,7 +7,7 @@ from typing import Any
 
 from homeassistant.components.recorder import get_instance, history
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
-from homeassistant.const import CONF_ADDRESS, CONF_SOURCE
+from homeassistant.const import CONF_UNIQUE_ID
 from homeassistant.core import HomeAssistant
 
 from .const import KEY_BEST_DIFFICULTY
@@ -57,7 +57,7 @@ class PoolClient:
     ) -> float:
         """Get the maximum value for the difficulty sensor."""
 
-        entity_id = f"{SENSOR_DOMAIN}.{config_data[CONF_SOURCE]}_{config_data[CONF_ADDRESS].lower()}_{worker_name}_{KEY_BEST_DIFFICULTY}"
+        entity_id = f"{SENSOR_DOMAIN}.{config_data[CONF_UNIQUE_ID]}_{worker_name}_{KEY_BEST_DIFFICULTY}"
 
         val = await get_instance(self._hass).async_add_executor_job(
             partial(
