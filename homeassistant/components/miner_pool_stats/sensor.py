@@ -1,4 +1,4 @@
-"""The Pool Server sensor platform."""
+"""The Pool sensor platform."""
 
 from __future__ import annotations
 

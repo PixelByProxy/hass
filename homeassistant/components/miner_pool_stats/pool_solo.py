@@ -1,4 +1,4 @@
-"""f2Pool Client for the Miner Pool Stats integration."""
+"""Sool Pool Client for the Miner Pool Stats integration."""
 
 import logging
 from typing import Any
