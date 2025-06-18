@@ -105,8 +105,8 @@ async def async_setup_entry(
 
     for worker_desc in WORKER_SENSOR_DESCRIPTIONS:
         for worker in coordinator.data.worker_list:
-            sensor_value = worker_desc.value_fn(worker)
-            if sensor_value is not None:
+            worker_value = worker_desc.value_fn(worker)
+            if worker_value is not None:
                 worker_sensor = PoolAddressWorkerSensorEntity(
                     coordinator, worker_desc, config_entry, worker
                 )
