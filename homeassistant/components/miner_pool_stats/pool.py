@@ -22,8 +22,8 @@ class PoolAddressWorkerData:
     """Representation of Pool address worker data."""
 
     name: str
-    best_difficulty: float
-    hash_rate: float
+    best_difficulty: float | None
+    hash_rate: float | None
     is_online: bool
 
 
@@ -31,7 +31,7 @@ class PoolAddressWorkerData:
 class PoolAddressData:
     """Representation of Pool address data."""
 
-    best_difficulty: float
+    best_difficulty: float | None
     worker_count: int
     worker_list: list[PoolAddressWorkerData]
 
@@ -76,6 +76,30 @@ class PoolClient:
                         return float(state.state)
 
         return 0.0
+
+    def _get_max_float(
+        self, value1: float | None, value2: float | None
+    ) -> float | None:
+        """Get the maximum of two float values."""
+        if value1 is None and value2 is None:
+            return None
+        if value1 is None:
+            return value2
+        if value2 is None:
+            return value1
+        return max(value1, value2)
+
+    def _combine_float_values(
+        self, value1: float | None, value2: float | None
+    ) -> float | None:
+        """Combine two float values."""
+        if value1 is None and value2 is None:
+            return None
+        if value1 is None:
+            return value2
+        if value2 is None:
+            return value1
+        return value1 + value2
 
     def is_float(self, string_value: str) -> bool:
         """Check if a string can be converted to a float."""

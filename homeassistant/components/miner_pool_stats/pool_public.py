@@ -81,13 +81,15 @@ class PublicPoolClient(PoolClient):
                         state_best_difficulty = await self._get_max_best_difficulty(
                             self._config_data, worker.name
                         )
-                        worker.best_difficulty = max(
+                        worker.best_difficulty = self._get_max_float(
                             worker.best_difficulty, state_best_difficulty
                         )
 
                         if worker.name in workers:
-                            workers[worker.name].hash_rate += worker.hash_rate
-                            workers[worker.name].best_difficulty = max(
+                            workers[worker.name].hash_rate = self._combine_float_values(
+                                workers[worker.name].hash_rate, worker.hash_rate
+                            )
+                            workers[worker.name].best_difficulty = self._get_max_float(
                                 workers[worker.name].best_difficulty,
                                 worker.best_difficulty,
                             )
@@ -98,11 +100,13 @@ class PublicPoolClient(PoolClient):
                             workers[worker.name] = worker
 
                         # convert hash rate to TH/s
-                        workers[worker.name].hash_rate = (
-                            HashRate.from_number(workers[worker.name].hash_rate)
-                            .to_unit(HashRateUnit.TH)
-                            .value
-                        )
+                        if workers[worker.name].hash_rate is not None:
+                            hash_rate_float = workers[worker.name].hash_rate or 0.0
+                            workers[worker.name].hash_rate = (
+                                HashRate.from_number(hash_rate_float)
+                                .to_unit(HashRateUnit.TH)
+                                .value
+                            )
 
                     # if there are no workers, log a warning
                     if not workers:

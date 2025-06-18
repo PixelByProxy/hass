@@ -97,7 +97,6 @@ class F2PoolClient(PoolClient):
                     json = await response.json()
 
                     # create a dictionary of workers by name
-                    # if the worker exists, combine the data
                     workers: dict[str, PoolAddressWorkerData] = {}
                     for worker_arr in json["workers"]:
                         last_seen = datetime.fromisoformat(worker_arr[6])
@@ -106,25 +105,16 @@ class F2PoolClient(PoolClient):
 
                         worker = PoolAddressWorkerData(
                             name=worker_arr[0],
-                            best_difficulty=0.0,
-                            hash_rate=float(worker_arr[1]),
+                            best_difficulty=None,
+                            hash_rate=(
+                                HashRate.from_number(float(worker_arr[1]))
+                                .to_unit(HashRateUnit.TH)
+                                .value
+                            ),
                             is_online=is_online,
                         )
 
-                        if worker.name in workers:
-                            workers[worker.name].hash_rate += worker.hash_rate
-                            workers[worker.name].is_online = (
-                                workers[worker.name].is_online or worker.is_online
-                            )
-                        else:
-                            workers[worker.name] = worker
-
-                        # convert hash rate to TH/s
-                        workers[worker.name].hash_rate = (
-                            HashRate.from_number(workers[worker.name].hash_rate)
-                            .to_unit(HashRateUnit.TH)
-                            .value
-                        )
+                        workers[worker.name] = worker
 
                     # if there are no workers, log a warning
                     if not workers:
@@ -133,7 +123,7 @@ class F2PoolClient(PoolClient):
                         )
 
                     return PoolAddressData(
-                        0.0,
+                        None,
                         int(json["worker_length"]),
                         list(workers.values()),
                     )

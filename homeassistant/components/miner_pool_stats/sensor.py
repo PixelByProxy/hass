@@ -95,22 +95,22 @@ async def async_setup_entry(
 
     sensors: list[SensorEntity] = []
 
-    sensors.extend(
-        [
-            PoolAddressSensorEntity(coordinator, description, config_entry)
-            for description in ADDRESS_SENSOR_DESCRIPTIONS
-        ]
-    )
-
-    sensors.extend(
-        [
-            PoolAddressWorkerSensorEntity(
-                coordinator, description, config_entry, worker
+    for address_desc in ADDRESS_SENSOR_DESCRIPTIONS:
+        address_value = address_desc.value_fn(coordinator.data)
+        if address_value is not None:
+            address_sensor = PoolAddressSensorEntity(
+                coordinator, address_desc, config_entry
             )
-            for worker in coordinator.data.worker_list
-            for description in WORKER_SENSOR_DESCRIPTIONS
-        ]
-    )
+            sensors.append(address_sensor)
+
+    for worker_desc in WORKER_SENSOR_DESCRIPTIONS:
+        for worker in coordinator.data.worker_list:
+            sensor_value = worker_desc.value_fn(worker)
+            if sensor_value is not None:
+                worker_sensor = PoolAddressWorkerSensorEntity(
+                    coordinator, worker_desc, config_entry, worker
+                )
+                sensors.append(worker_sensor)
 
     async_add_entities(sensors)
 

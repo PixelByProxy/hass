@@ -61,30 +61,22 @@ class SoloPoolClient(PoolClient):
                     json = await response.json()
 
                     # create a dictionary of workers by name
-                    # if the worker exists, combine the data
                     workers: dict[str, PoolAddressWorkerData] = {}
                     for worker_name in json["workers"]:
                         worker = PoolAddressWorkerData(
                             name=worker_name,
-                            best_difficulty=0.0,
-                            hash_rate=float(json["workers"][worker_name]["hr"]),
+                            best_difficulty=None,
+                            hash_rate=(
+                                HashRate.from_number(
+                                    float(json["workers"][worker_name]["hr"])
+                                )
+                                .to_unit(HashRateUnit.TH)
+                                .value
+                            ),
                             is_online=not bool(json["workers"][worker_name]["offline"]),
                         )
 
-                        if worker.name in workers:
-                            workers[worker.name].hash_rate += worker.hash_rate
-                            workers[worker.name].is_online = (
-                                workers[worker.name].is_online or worker.is_online
-                            )
-                        else:
-                            workers[worker.name] = worker
-
-                        # convert hash rate to TH/s
-                        workers[worker.name].hash_rate = (
-                            HashRate.from_number(workers[worker.name].hash_rate)
-                            .to_unit(HashRateUnit.TH)
-                            .value
-                        )
+                        workers[worker.name] = worker
 
                     # if there are no workers, log a warning
                     if not workers:
@@ -93,7 +85,7 @@ class SoloPoolClient(PoolClient):
                         )
 
                     return PoolAddressData(
-                        0.0,
+                        None,
                         int(json["workersTotal"]),
                         list(workers.values()),
                     )
