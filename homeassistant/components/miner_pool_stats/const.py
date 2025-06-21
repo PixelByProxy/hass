@@ -14,6 +14,8 @@ POOL_SOURCE_SOLO_POOL_NAME = "SoloPool.org"
 WALLET_ADDRESS = "Wallet Address"
 WORKER = "Worker"
 
+KEY_TOTAL_PAID = "total_paid"
+KEY_CURRENT_BALANCE = "current_balance"
 KEY_WORKER_COUNT = "worker_count"
 KEY_BEST_DIFFICULTY = "best_difficulty"
 KEY_HASH_RATE = "hash_rate"

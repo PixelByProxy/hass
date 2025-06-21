@@ -107,6 +107,8 @@ class PublicPoolClient(PoolClient):
                         best_difficulty = 0.0
 
                     return PoolAddressData(
+                        None,
+                        None,
                         best_difficulty,
                         int(json["workersCount"]),
                         list(workers.values()),

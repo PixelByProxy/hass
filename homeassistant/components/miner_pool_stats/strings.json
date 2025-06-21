@@ -20,6 +20,12 @@
   },
   "entity": {
     "sensor": {
+      "total_paid": {
+        "name": "Total Paid"
+      },
+      "current_balance": {
+        "name": "Current Balance"
+      },
       "worker_count": {
         "name": "Workers"
       },

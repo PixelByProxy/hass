@@ -31,6 +31,8 @@ class PoolAddressWorkerData:
 class PoolAddressData:
     """Representation of Pool address data."""
 
+    total_paid: float | None
+    current_balance: float | None
     best_difficulty: float | None
     worker_count: int
     worker_list: list[PoolAddressWorkerData]

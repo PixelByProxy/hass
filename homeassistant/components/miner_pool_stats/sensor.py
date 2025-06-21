@@ -11,18 +11,26 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import CONF_UNIQUE_ID, EntityCategory
+from homeassistant.const import (
+    CONF_TYPE,
+    CONF_UNIQUE_ID,
+    CURRENCY_DOLLAR,
+    EntityCategory,
+)
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import StateType
 
 from .const import (
     KEY_BEST_DIFFICULTY,
+    KEY_CURRENT_BALANCE,
     KEY_HASH_RATE,
+    KEY_TOTAL_PAID,
     KEY_WORKER_COUNT,
     UNIT_DIFFICULTY,
     UNIT_HASH_RATE,
     UNIT_WORKER_COUNT,
+    CryptoCoin,
 )
 from .coordinator import PoolConfigEntry, PoolCoordinator
 from .entity import PoolAddressDeviceEntity, PoolAddressWorkerDeviceEntity
@@ -47,6 +55,22 @@ class PoolAddressWorkerEntityDescription(SensorEntityDescription):
 
 
 ADDRESS_SENSOR_DESCRIPTIONS = [
+    PoolAddressSensorEntityDescription(
+        key=KEY_TOTAL_PAID,
+        translation_key=KEY_TOTAL_PAID,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=CURRENCY_DOLLAR,
+        value_fn=lambda data: data.total_paid,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
+    PoolAddressSensorEntityDescription(
+        key=KEY_CURRENT_BALANCE,
+        translation_key=KEY_CURRENT_BALANCE,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=CURRENCY_DOLLAR,
+        value_fn=lambda data: data.current_balance,
+        entity_category=EntityCategory.DIAGNOSTIC,
+    ),
     PoolAddressSensorEntityDescription(
         key=KEY_WORKER_COUNT,
         translation_key=KEY_WORKER_COUNT,
@@ -134,6 +158,11 @@ class PoolAddressSensorEntity(PoolAddressDeviceEntity, SensorEntity):
         self.entity_id = (
             f"{SENSOR_DOMAIN}.{config_entry.data[CONF_UNIQUE_ID]}_{description.key}"
         )
+        # convert to coin currency if applicable
+        if self.entity_description.native_unit_of_measurement == CURRENCY_DOLLAR:
+            self._attr_native_unit_of_measurement = CryptoCoin(
+                config_entry.data[CONF_TYPE]
+            ).name
         self._update_properties()
 
     @callback

@@ -72,6 +72,8 @@ class SoloPoolClient(PoolClient):
                         )
 
                     return PoolAddressData(
+                        float(json["paymentsTotal"] or 0.00),
+                        float(json["payments"] or 0.00),
                         None,
                         int(json["workersTotal"]),
                         list(workers.values()),

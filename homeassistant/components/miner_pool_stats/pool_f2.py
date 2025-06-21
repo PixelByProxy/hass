@@ -110,6 +110,8 @@ class F2PoolClient(PoolClient):
                         )
 
                     return PoolAddressData(
+                        float(json["paid"]),
+                        float(json["balance"]),
                         None,
                         int(json["worker_length"]),
                         list(workers.values()),
