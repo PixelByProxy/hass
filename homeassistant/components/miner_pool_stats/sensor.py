@@ -183,3 +183,8 @@ class PoolAddressWorkerSensorEntity(PoolAddressWorkerDeviceEntity, SensorEntity)
     def _update_properties(self) -> None:
         """Update sensor properties."""
         self._attr_native_value = self.entity_description.value_fn(self.worker)
+
+    @property
+    def available(self) -> bool:
+        """Check if device and sensor is available in data."""
+        return super().available and self.worker.is_online
