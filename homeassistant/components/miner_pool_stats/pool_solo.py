@@ -36,19 +36,6 @@ class SoloPoolClient(PoolClient):
         """Perform async initialization of client instance."""
         await self.async_get_data()
 
-    async def async_is_online(self) -> bool:
-        """Check if the server is online, supporting both Java and Bedrock Edition servers."""
-        try:
-            await self.async_get_data()
-        except PoolConnectionError as error:
-            _LOGGER.debug(
-                "Connection check failed: %s",
-                self._get_error_message(error),
-            )
-            return False
-
-        return True
-
     async def async_get_data(self) -> PoolAddressData:
         """Get updated data from the pool."""
 
