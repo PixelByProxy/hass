@@ -7,14 +7,28 @@ from typing import Any
 
 from homeassistant.components.recorder import get_instance, history
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
-from homeassistant.const import CONF_UNIQUE_ID
+from homeassistant.const import (
+    CONF_ADDRESS,
+    CONF_FRIENDLY_NAME,
+    CONF_TYPE,
+    CONF_UNIQUE_ID,
+)
 from homeassistant.core import HomeAssistant
 
-from .const import KEY_BEST_DIFFICULTY
+from .const import KEY_BEST_DIFFICULTY, CryptoCoin
 
 
 class PoolConnectionError(Exception):
     """Raised when data can not be fetched from the server."""
+
+
+@dataclass
+class PoolInitData:
+    """Representation of Pool initialization data."""
+
+    pool_name: str
+    coin_name: str
+    address: str
 
 
 @dataclass
@@ -46,9 +60,14 @@ class PoolClient:
         self._hass = hass
         self._config_data = config_data
 
-    @abstractmethod
-    async def async_initialize(self) -> None:
-        """Initialize the pool."""
+    async def async_initialize(self) -> PoolInitData:
+        """Perform async initialization of client instance."""
+        await self.async_get_data()
+        return PoolInitData(
+            self._config_data[CONF_FRIENDLY_NAME],
+            CryptoCoin(self._config_data[CONF_TYPE]).name,
+            self._config_data[CONF_ADDRESS],
+        )
 
     @abstractmethod
     async def async_get_data(self) -> PoolAddressData:

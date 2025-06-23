@@ -32,10 +32,6 @@ class SoloPoolClient(PoolClient):
         self._address = config_data[CONF_ADDRESS]
         self._coin_type = config_data[CONF_TYPE]
 
-    async def async_initialize(self) -> None:
-        """Perform async initialization of client instance."""
-        await self.async_get_data()
-
     async def async_get_data(self) -> PoolAddressData:
         """Get updated data from the pool."""
 

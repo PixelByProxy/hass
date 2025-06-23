@@ -84,15 +84,11 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> str:
 
     Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
     """
-    pool = data[CONF_FRIENDLY_NAME]
-    address = data[CONF_ADDRESS]
-    coin = CryptoCoin(data[CONF_TYPE]).name
-    title = f"{pool} - {coin} - {address}"
 
     pool = PoolFactory.get(hass, data)
-    await pool.async_initialize()
+    init_data = await pool.async_initialize()
 
-    return title
+    return f"{init_data.pool_name} - {init_data.coin_name} - {init_data.address}"
 
 
 class PoolConfigFlow(ConfigFlow, domain=DOMAIN):

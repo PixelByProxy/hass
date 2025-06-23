@@ -62,10 +62,6 @@ class F2PoolClient(PoolClient):
         self._coin_type = config_data[CONF_TYPE]
         self._api_key = config_data[CONF_API_KEY]
 
-    async def async_initialize(self) -> None:
-        """Perform async initialization of client instance."""
-        await self.async_get_data()
-
     async def async_get_data(self) -> PoolAddressData:
         """Get updated data from the pool."""
 
