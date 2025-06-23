@@ -11,12 +11,7 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import (
-    CONF_TYPE,
-    CONF_UNIQUE_ID,
-    CURRENCY_DOLLAR,
-    EntityCategory,
-)
+from homeassistant.const import CONF_TYPE, CONF_UNIQUE_ID, EntityCategory
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import StateType
@@ -45,6 +40,7 @@ class PoolAddressSensorEntityDescription(SensorEntityDescription):
     """Class describing Pool Address sensor entities."""
 
     value_fn: Callable[[PoolAddressData], StateType]
+    is_currency: bool = False
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -59,7 +55,7 @@ ADDRESS_SENSOR_DESCRIPTIONS = [
         key=KEY_TOTAL_PAID,
         translation_key=KEY_TOTAL_PAID,
         state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=CURRENCY_DOLLAR,
+        is_currency=True,
         value_fn=lambda data: data.total_paid,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -67,7 +63,7 @@ ADDRESS_SENSOR_DESCRIPTIONS = [
         key=KEY_CURRENT_BALANCE,
         translation_key=KEY_CURRENT_BALANCE,
         state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=CURRENCY_DOLLAR,
+        is_currency=True,
         value_fn=lambda data: data.current_balance,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),
@@ -159,7 +155,7 @@ class PoolAddressSensorEntity(PoolAddressDeviceEntity, SensorEntity):
             f"{SENSOR_DOMAIN}.{config_entry.data[CONF_UNIQUE_ID]}_{description.key}"
         )
         # convert to coin currency if applicable
-        if self.entity_description.native_unit_of_measurement == CURRENCY_DOLLAR:
+        if self.entity_description.is_currency:
             self._attr_native_unit_of_measurement = CryptoCoin(
                 config_entry.data[CONF_TYPE]
             ).name
