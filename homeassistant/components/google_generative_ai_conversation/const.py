@@ -6,9 +6,11 @@ DOMAIN = "google_generative_ai_conversation"
 LOGGER = logging.getLogger(__package__)
 CONF_PROMPT = "prompt"
 
+ATTR_MODEL = "model"
 CONF_RECOMMENDED = "recommended"
 CONF_CHAT_MODEL = "chat_model"
 RECOMMENDED_CHAT_MODEL = "models/gemini-2.0-flash"
+RECOMMENDED_TTS_MODEL = "gemini-2.5-flash-preview-tts"
 CONF_TEMPERATURE = "temperature"
 RECOMMENDED_TEMPERATURE = 1.0
 CONF_TOP_P = "top_p"
@@ -26,3 +28,4 @@ CONF_USE_GOOGLE_SEARCH_TOOL = "enable_google_search_tool"
 RECOMMENDED_USE_GOOGLE_SEARCH_TOOL = False
 
 TIMEOUT_MILLIS = 10000
+FILE_POLLING_INTERVAL_SECONDS = 0.05

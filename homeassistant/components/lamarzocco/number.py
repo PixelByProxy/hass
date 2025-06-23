@@ -58,6 +58,10 @@ ENTITIES: tuple[LaMarzoccoNumberEntityDescription, ...] = (
                 CoffeeBoiler, machine.dashboard.config[WidgetType.CM_COFFEE_BOILER]
             ).target_temperature
         ),
+        available_fn=(
+            lambda coordinator: WidgetType.CM_COFFEE_BOILER
+            in coordinator.device.dashboard.config
+        ),
     ),
     LaMarzoccoNumberEntityDescription(
         key="smart_standby_time",
@@ -100,8 +104,9 @@ ENTITIES: tuple[LaMarzoccoNumberEntityDescription, ...] = (
             .seconds.seconds_out
         ),
         available_fn=(
-            lambda machine: cast(
-                PreBrewing, machine.dashboard.config[WidgetType.CM_PRE_BREWING]
+            lambda coordinator: cast(
+                PreBrewing,
+                coordinator.device.dashboard.config[WidgetType.CM_PRE_BREWING],
             ).mode
             is PreExtractionMode.PREINFUSION
         ),
@@ -118,7 +123,7 @@ ENTITIES: tuple[LaMarzoccoNumberEntityDescription, ...] = (
         key="prebrew_on",
         translation_key="prebrew_time_on",
         device_class=NumberDeviceClass.DURATION,
-        native_unit_of_measurement=UnitOfTime.MINUTES,
+        native_unit_of_measurement=UnitOfTime.SECONDS,
         native_step=PRECISION_TENTHS,
         native_min_value=0,
         native_max_value=10,
@@ -140,8 +145,8 @@ ENTITIES: tuple[LaMarzoccoNumberEntityDescription, ...] = (
             .times.pre_brewing[0]
             .seconds.seconds_in
         ),
-        available_fn=lambda machine: cast(
-            PreBrewing, machine.dashboard.config[WidgetType.CM_PRE_BREWING]
+        available_fn=lambda coordinator: cast(
+            PreBrewing, coordinator.device.dashboard.config[WidgetType.CM_PRE_BREWING]
         ).mode
         is PreExtractionMode.PREBREWING,
         supported_fn=(
@@ -157,7 +162,7 @@ ENTITIES: tuple[LaMarzoccoNumberEntityDescription, ...] = (
         key="prebrew_off",
         translation_key="prebrew_time_off",
         device_class=NumberDeviceClass.DURATION,
-        native_unit_of_measurement=UnitOfTime.MINUTES,
+        native_unit_of_measurement=UnitOfTime.SECONDS,
         native_step=PRECISION_TENTHS,
         native_min_value=0,
         native_max_value=10,
@@ -180,8 +185,9 @@ ENTITIES: tuple[LaMarzoccoNumberEntityDescription, ...] = (
             .seconds.seconds_out
         ),
         available_fn=(
-            lambda machine: cast(
-                PreBrewing, machine.dashboard.config[WidgetType.CM_PRE_BREWING]
+            lambda coordinator: cast(
+                PreBrewing,
+                coordinator.device.dashboard.config[WidgetType.CM_PRE_BREWING],
             ).mode
             is PreExtractionMode.PREBREWING
         ),
@@ -219,7 +225,7 @@ class LaMarzoccoNumberEntity(LaMarzoccoEntity, NumberEntity):
     entity_description: LaMarzoccoNumberEntityDescription
 
     @property
-    def native_value(self) -> float:
+    def native_value(self) -> float | int:
         """Return the current value."""
         return self.entity_description.native_value_fn(self.coordinator.device)
 
