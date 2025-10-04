@@ -2,12 +2,9 @@
 
 from datetime import datetime, timedelta
 import logging
-from typing import Any
 
 from aiohttp import ClientError, ClientSession
 
-from homeassistant.const import CONF_ADDRESS, CONF_URL
-from homeassistant.core import HomeAssistant
 from homeassistant.util.dt import as_utc, now
 
 from .hash import HashRate, HashRateUnit
@@ -28,16 +25,13 @@ DATA_UPDATE_RETRIES: int = 3
 class PublicPoolClient(PoolClient):
     """Public Pool Client API."""
 
-    def __init__(self, hass: HomeAssistant, config_data: dict[str, Any]) -> None:
-        """Initialize the client instance."""
-        super().__init__(hass, config_data)
-        self._url = config_data[CONF_URL]
-        self._address = config_data[CONF_ADDRESS]
-
     async def async_get_data(self) -> PoolAddressData:
         """Get updated data from the pool."""
 
-        url = f"{self._url.rstrip('/')}/api/client/{self._address}"
+        if self._pool_config.pool_url is None:
+            raise PoolConnectionError("Pool url is not configured.")
+
+        url = f"{self._pool_config.pool_url.rstrip('/')}/api/client/{self._pool_config.address}"
         _LOGGER.debug("Fetching workers from %s", url)
 
         try:
@@ -62,7 +56,7 @@ class PublicPoolClient(PoolClient):
 
                         # get the maximum stored for the best difficulty
                         state_best_difficulty = await self._get_max_best_difficulty(
-                            self._config_data, worker.name
+                            worker.name
                         )
                         worker.best_difficulty = self._get_max_float(
                             worker.best_difficulty, state_best_difficulty
@@ -94,7 +88,7 @@ class PublicPoolClient(PoolClient):
                     # if there are no workers, log a warning
                     if not workers:
                         _LOGGER.warning(
-                            "No workers found for address %s", self._address
+                            "No workers found for address %s", self._pool_config.address
                         )
 
                     try:
@@ -111,9 +105,9 @@ class PublicPoolClient(PoolClient):
                     )
 
                 raise PoolConnectionError(
-                    f"Lookup of '{self._address}' failed: Status code {response.status}"
+                    f"Lookup of '{self._pool_config.address}' failed: Status code {response.status}"
                 )
         except ClientError as error:
             raise PoolConnectionError(
-                f"Lookup of '{self._address}' failed: {self._get_error_message(error)}"
+                f"Lookup of '{self._pool_config.address}' failed: {self._get_error_message(error)}"
             ) from error

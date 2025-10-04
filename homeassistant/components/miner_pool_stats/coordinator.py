@@ -48,11 +48,12 @@ class PoolCoordinator(DataUpdateCoordinator[PoolAddressData]):
         """Set up the Pool coordinator."""
 
         # create API instance
-        self._api = PoolFactory.get(self._hass, dict(self._entry.data))
+        config_data = dict(self._entry.data)
+        self._api = PoolFactory.get(self._hass, config_data)
 
         # validate the connection
         try:
-            return await self._api.async_initialize()
+            await self._api.async_initialize(config_data)
         except PoolConnectionError as error:
             raise ConfigEntryNotReady(f"Unable to load pool data: {error}") from error
 

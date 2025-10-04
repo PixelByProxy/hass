@@ -2,12 +2,9 @@
 
 from datetime import datetime, timedelta
 import logging
-from typing import Any
 
 from aiohttp import ClientError, ClientSession
 
-from homeassistant.const import CONF_ADDRESS, CONF_API_KEY, CONF_TYPE
-from homeassistant.core import HomeAssistant
 from homeassistant.util.dt import as_utc, now
 
 from .const import CryptoCoin
@@ -26,50 +23,49 @@ DATA_UPDATE_TIMEOUT: float = 10
 DATA_UPDATE_RETRIES: int = 3
 
 POOL_COIN_URI_PATHS = {
-    CryptoCoin.BTC: "bitcoin",
-    CryptoCoin.BCH: "bitcoin-cash",
-    CryptoCoin.ALEO: "aleo",
-    CryptoCoin.BELLS: "bells-mm",
-    CryptoCoin.CFX: "conflux",
-    CryptoCoin.CKB: "nervos",
-    CryptoCoin.DASH: "dash",
-    CryptoCoin.ELA: "elacoin",
-    CryptoCoin.ETC: "ethereum-classic",
-    CryptoCoin.EHHW: "ethw",
-    CryptoCoin.FB: "fractal-bitcoin",
-    CryptoCoin.IRON: "iron-fish",
-    CryptoCoin.HTR: "hathor",
-    CryptoCoin.JKC: "junkcoin",
-    CryptoCoin.KDA: "kadena",
-    CryptoCoin.KAS: "kaspa",
-    CryptoCoin.LTC: "litecoin",
-    CryptoCoin.LKY: "luckycoin",
-    CryptoCoin.NEXA: "nexa",
-    CryptoCoin.NMC: "nmccoin",
-    CryptoCoin.PEP: "pepecoin",
-    CryptoCoin.ZEC: "zcash",
-    CryptoCoin.ZEN: "zen",
+    CryptoCoin.BTC.value: "bitcoin",
+    CryptoCoin.BCH.value: "bitcoin-cash",
+    CryptoCoin.ALEO.value: "aleo",
+    CryptoCoin.BELLS.value: "bells-mm",
+    CryptoCoin.CFX.value: "conflux",
+    CryptoCoin.CKB.value: "nervos",
+    CryptoCoin.DASH.value: "dash",
+    CryptoCoin.ELA.value: "elacoin",
+    CryptoCoin.ETC.value: "ethereum-classic",
+    CryptoCoin.EHHW.value: "ethw",
+    CryptoCoin.FB.value: "fractal-bitcoin",
+    CryptoCoin.IRON.value: "iron-fish",
+    CryptoCoin.HTR.value: "hathor",
+    CryptoCoin.JKC.value: "junkcoin",
+    CryptoCoin.KDA.value: "kadena",
+    CryptoCoin.KAS.value: "kaspa",
+    CryptoCoin.LTC.value: "litecoin",
+    CryptoCoin.LKY.value: "luckycoin",
+    CryptoCoin.NEXA.value: "nexa",
+    CryptoCoin.NMC.value: "nmccoin",
+    CryptoCoin.PEP.value: "pepecoin",
+    CryptoCoin.ZEC.value: "zcash",
+    CryptoCoin.ZEN.value: "zen",
 }
 
 
 class F2PoolClient(PoolClient):
     """Public Pool Client API."""
 
-    def __init__(self, hass: HomeAssistant, config_data: dict[str, Any]) -> None:
-        """Initialize the client instance."""
-        super().__init__(hass, config_data)
-        self._address = config_data[CONF_ADDRESS]
-        self._coin_type = config_data[CONF_TYPE]
-        self._api_key = config_data[CONF_API_KEY]
-
     async def async_get_data(self) -> PoolAddressData:
         """Get updated data from the pool."""
 
-        coin_path = POOL_COIN_URI_PATHS[self._coin_type]
-        url = f"https://api.f2pool.com/{coin_path}/{self._address}"
+        if self._pool_config.api_key is None:
+            raise PoolConnectionError("Pool api key is not configured.")
+
+        coin_path = POOL_COIN_URI_PATHS[self._pool_config.coin_key]
+        url = f"https://api.f2pool.com/{coin_path}/{self._pool_config.address}"
         _LOGGER.debug("Fetching workers from %s", url)
 
-        headers = {"F2P-API-SECRET": self._api_key, "Content-Type": "application/json"}
+        headers = {
+            "F2P-API-SECRET": self._pool_config.api_key,
+            "Content-Type": "application/json",
+        }
 
         try:
             async with (
@@ -102,7 +98,7 @@ class F2PoolClient(PoolClient):
                     # if there are no workers, log a warning
                     if not workers:
                         _LOGGER.warning(
-                            "No workers found for address %s", self._address
+                            "No workers found for address %s", self._pool_config.address
                         )
 
                     return PoolAddressData(
@@ -114,9 +110,9 @@ class F2PoolClient(PoolClient):
                     )
 
                 raise PoolConnectionError(
-                    f"Lookup of '{self._address}' failed: Status code {response.status}"
+                    f"Lookup of '{self._pool_config.address}' failed: Status code {response.status}"
                 )
         except ClientError as error:
             raise PoolConnectionError(
-                f"Lookup of '{self._address}' failed: {self._get_error_message(error)}"
+                f"Lookup of '{self._pool_config.address}' failed: {self._get_error_message(error)}"
             ) from error

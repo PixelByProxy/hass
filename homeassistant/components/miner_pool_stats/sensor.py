@@ -11,7 +11,7 @@ from homeassistant.components.sensor import (
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import CONF_TYPE, CONF_UNIQUE_ID, EntityCategory
+from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import StateType
@@ -29,7 +29,7 @@ from .const import (
 )
 from .coordinator import PoolConfigEntry, PoolCoordinator
 from .entity import PoolAddressDeviceEntity, PoolAddressWorkerDeviceEntity
-from .pool import PoolAddressData, PoolAddressWorkerData
+from .pool import PoolAddressData, PoolAddressWorkerData, PoolInitData
 
 # Coordinator is used to centralize the data updates.
 PARALLEL_UPDATES = 0
@@ -147,18 +147,20 @@ class PoolAddressSensorEntity(PoolAddressDeviceEntity, SensorEntity):
         config_entry: PoolConfigEntry,
     ) -> None:
         """Initialize the Pool Address sensor."""
-        super().__init__(coordinator, config_entry)
+        pool_config = PoolInitData(dict(config_entry.data))
+        super().__init__(coordinator, config_entry, pool_config)
         self.entity_description = description
         self._attr_unique_id = f"{config_entry.entry_id}-{description.key}"
         self._attr_translation_key = description.translation_key
-        self.entity_id = (
-            f"{SENSOR_DOMAIN}.{config_entry.data[CONF_UNIQUE_ID]}_{description.key}"
-        )
+        self.entity_id = f"{SENSOR_DOMAIN}.{pool_config.unique_id}_{description.key}"
         # convert to coin currency if applicable
         if self.entity_description.is_currency:
-            self._attr_native_unit_of_measurement = CryptoCoin(
-                config_entry.data[CONF_TYPE]
-            ).name
+            try:
+                self._attr_native_unit_of_measurement = CryptoCoin(
+                    pool_config.coin_key
+                ).name
+            except ValueError:
+                self._attr_native_unit_of_measurement = pool_config.coin_name
         self._update_properties()
 
     @callback
@@ -188,14 +190,17 @@ class PoolAddressWorkerSensorEntity(PoolAddressWorkerDeviceEntity, SensorEntity)
         worker: PoolAddressWorkerData,
     ) -> None:
         """Initialize the Pool Address Worker sensor."""
-        super().__init__(coordinator, config_entry, worker.name)
+        pool_config = PoolInitData(dict(config_entry.data))
+        super().__init__(coordinator, config_entry, pool_config, worker.name)
         self.entity_description = description
         self.worker = worker
         self._attr_unique_id = (
             f"{config_entry.entry_id}-{worker.name}-{description.key}"
         )
         self._attr_translation_key = description.translation_key
-        self.entity_id = f"{SENSOR_DOMAIN}.{config_entry.data[CONF_UNIQUE_ID]}_{worker.name}_{description.key}"
+        self.entity_id = (
+            f"{SENSOR_DOMAIN}.{pool_config.unique_id}_{worker.name}_{description.key}"
+        )
         self._update_properties()
 
     @callback

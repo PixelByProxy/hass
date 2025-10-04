@@ -8,16 +8,6 @@ from typing import Any
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
-from homeassistant.const import (
-    CONF_ADDRESS,
-    CONF_API_KEY,
-    CONF_FRIENDLY_NAME,
-    CONF_SOURCE,
-    CONF_TYPE,
-    CONF_UNIQUE_ID,
-    CONF_URL,
-)
-from homeassistant.core import HomeAssistant
 from homeassistant.helpers.selector import (
     SelectOptionDict,
     SelectSelector,
@@ -26,7 +16,18 @@ from homeassistant.helpers.selector import (
 )
 
 from .const import (
+    CONF_ADDRESS,
+    CONF_API_KEY,
+    CONF_COIN_KEY,
+    CONF_COIN_NAME,
+    CONF_POOL_KEY,
+    CONF_POOL_NAME,
+    CONF_POOL_URL,
+    CONF_TITLE,
+    CONF_UNIQUE_ID,
     DOMAIN,
+    POOL_SOURCE_COIN_MINERS_KEY,
+    POOL_SOURCE_COIN_MINERS_NAME,
     POOL_SOURCE_F2_POOL_COINS,
     POOL_SOURCE_F2_POOL_KEY,
     POOL_SOURCE_F2_POOL_NAME,
@@ -38,15 +39,19 @@ from .const import (
     CryptoCoin,
 )
 from .factory import PoolFactory
-from .pool import PoolConnectionError
+from .pool import PoolConnectionError, PoolInitData
 
 _LOGGER = logging.getLogger(__name__)
 
 STEP_POOL_SOURCE_SCHEMA = vol.Schema(
     {
-        vol.Required(CONF_SOURCE): SelectSelector(
+        vol.Required(CONF_POOL_KEY): SelectSelector(
             SelectSelectorConfig(
                 options=[
+                    SelectOptionDict(
+                        value=POOL_SOURCE_COIN_MINERS_KEY,
+                        label=POOL_SOURCE_COIN_MINERS_NAME,
+                    ),
                     SelectOptionDict(
                         value=POOL_SOURCE_PUBLIC_POOL_KEY,
                         label=POOL_SOURCE_PUBLIC_POOL_NAME,
@@ -68,7 +73,7 @@ STEP_POOL_SOURCE_SCHEMA = vol.Schema(
 
 STEP_PUBLIC_POOL_DATA_SCHEMA = vol.Schema(
     {
-        vol.Required(CONF_URL, default="https://web.public-pool.io/"): str,
+        vol.Required(CONF_POOL_URL, default="https://web.public-pool.io/"): str,
     }
 )
 
@@ -79,18 +84,6 @@ STEP_WALLET_DATA_SCHEMA = vol.Schema(
 )
 
 
-async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> str:
-    """Validate the user input allows us to connect.
-
-    Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
-    """
-
-    pool = PoolFactory.get(hass, data)
-    init_data = await pool.async_initialize()
-
-    return f"{init_data.pool_name} - {init_data.coin_name} - {init_data.address}"
-
-
 class PoolConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Miner Pool Stats."""
 
@@ -99,6 +92,43 @@ class PoolConfigFlow(ConfigFlow, domain=DOMAIN):
     def __init__(self) -> None:
         """Initialize."""
         self._data: dict[str, Any] = {}
+
+    async def validate_input(self) -> PoolInitData:
+        """Validate the user input allows us to connect.
+
+        Data has the keys from STEP_USER_DATA_SCHEMA with values provided by the user.
+        """
+
+        if CONF_TITLE not in self._data:
+            self._data[CONF_TITLE] = ""
+
+        if CONF_UNIQUE_ID not in self._data:
+            self._data[CONF_UNIQUE_ID] = ""
+
+        if CONF_COIN_KEY not in self._data:
+            self._data[CONF_COIN_KEY] = ""
+
+        if CONF_COIN_NAME not in self._data:
+            self._data[CONF_COIN_NAME] = ""
+
+        pool = PoolFactory.get(self.hass, self._data)
+        init_data = await pool.async_initialize(self._data)
+
+        self._data.update(init_data)
+
+        try:
+            self._data[CONF_COIN_NAME] = CryptoCoin(self._data[CONF_COIN_KEY]).name
+        except ValueError:
+            self._data[CONF_COIN_NAME] = self._data[CONF_COIN_KEY]
+
+        self._data[CONF_TITLE] = (
+            f"{self._data[CONF_POOL_NAME]} - {self._data[CONF_COIN_NAME]} - {self._data[CONF_ADDRESS]}"
+        )
+        self._data[CONF_UNIQUE_ID] = (
+            f"{self._data[CONF_POOL_KEY]}_{self._data[CONF_COIN_KEY]}_{self._data[CONF_ADDRESS].lower()}"
+        )
+
+        return PoolInitData(self._data)
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
@@ -115,17 +145,21 @@ class PoolConfigFlow(ConfigFlow, domain=DOMAIN):
 
         self._data.update(user_input)
 
-        if user_input[CONF_SOURCE] == POOL_SOURCE_PUBLIC_POOL_KEY:
-            self._data[CONF_FRIENDLY_NAME] = POOL_SOURCE_PUBLIC_POOL_NAME
+        if user_input[CONF_POOL_KEY] == POOL_SOURCE_PUBLIC_POOL_KEY:
+            self._data[CONF_POOL_NAME] = POOL_SOURCE_PUBLIC_POOL_NAME
             return await self.async_step_public_pool(user_input)
 
-        if user_input[CONF_SOURCE] == POOL_SOURCE_F2_POOL_KEY:
-            self._data[CONF_FRIENDLY_NAME] = POOL_SOURCE_F2_POOL_NAME
+        if user_input[CONF_POOL_KEY] == POOL_SOURCE_F2_POOL_KEY:
+            self._data[CONF_POOL_NAME] = POOL_SOURCE_F2_POOL_NAME
             return await self.async_step_f2_pool(user_input)
 
-        if user_input[CONF_SOURCE] == POOL_SOURCE_SOLO_POOL_KEY:
-            self._data[CONF_FRIENDLY_NAME] = POOL_SOURCE_SOLO_POOL_NAME
+        if user_input[CONF_POOL_KEY] == POOL_SOURCE_SOLO_POOL_KEY:
+            self._data[CONF_POOL_NAME] = POOL_SOURCE_SOLO_POOL_NAME
             return await self.async_step_solo_pool(user_input)
+
+        if user_input[CONF_POOL_KEY] == POOL_SOURCE_COIN_MINERS_KEY:
+            self._data[CONF_POOL_NAME] = POOL_SOURCE_COIN_MINERS_NAME
+            return await self.async_step_wallet(user_input)
 
         errors["base"] = "Invalid pool source"
 
@@ -140,7 +174,7 @@ class PoolConfigFlow(ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
 
         # if the user input CONF_URL is None, show the form
-        if user_input is None or user_input.get(CONF_URL) is None:
+        if user_input is None or user_input.get(CONF_POOL_URL) is None:
             return self.async_show_form(
                 step_id="public_pool",
                 data_schema=STEP_PUBLIC_POOL_DATA_SCHEMA,
@@ -148,7 +182,7 @@ class PoolConfigFlow(ConfigFlow, domain=DOMAIN):
             )
 
         self._data.update(user_input)
-        self._data[CONF_TYPE] = CryptoCoin.BTC.value
+        self._data[CONF_COIN_KEY] = CryptoCoin.BTC.value
 
         return await self.async_step_wallet(user_input)
 
@@ -161,7 +195,7 @@ class PoolConfigFlow(ConfigFlow, domain=DOMAIN):
         # if the user input CONF_URL is None, show the form
         if (
             user_input is None
-            or user_input.get(CONF_TYPE) is None
+            or user_input.get(CONF_COIN_KEY) is None
             or user_input.get(CONF_API_KEY) is None
         ):
             coins: list[SelectOptionDict] = [
@@ -171,7 +205,7 @@ class PoolConfigFlow(ConfigFlow, domain=DOMAIN):
 
             coin_schema = vol.Schema(
                 {
-                    vol.Required(CONF_TYPE): SelectSelector(
+                    vol.Required(CONF_COIN_KEY): SelectSelector(
                         SelectSelectorConfig(
                             options=coins,
                             mode=SelectSelectorMode.DROPDOWN,
@@ -198,7 +232,7 @@ class PoolConfigFlow(ConfigFlow, domain=DOMAIN):
         errors: dict[str, str] = {}
 
         # if the user input CONF_URL is None, show the form
-        if user_input is None or user_input.get(CONF_TYPE) is None:
+        if user_input is None or user_input.get(CONF_COIN_KEY) is None:
             coins: list[SelectOptionDict] = [
                 SelectOptionDict(value=coin.value, label=coin.name)
                 for coin in POOL_SOURCE_SOLO_POOL_COINS
@@ -206,7 +240,7 @@ class PoolConfigFlow(ConfigFlow, domain=DOMAIN):
 
             coin_schema = vol.Schema(
                 {
-                    vol.Required(CONF_TYPE): SelectSelector(
+                    vol.Required(CONF_COIN_KEY): SelectSelector(
                         SelectSelectorConfig(
                             options=coins,
                             mode=SelectSelectorMode.DROPDOWN,
@@ -241,18 +275,8 @@ class PoolConfigFlow(ConfigFlow, domain=DOMAIN):
 
         self._data.update(user_input)
 
-        # set the unique id
-        unique_id = f"{self._data[CONF_SOURCE]}_{self._data[CONF_TYPE]}_{self._data[CONF_ADDRESS].lower()}"
-        self._data[CONF_UNIQUE_ID] = unique_id
-
-        # abort config flow if service is already configured
-        match_dict: dict[str, Any] = {
-            CONF_UNIQUE_ID: unique_id,
-        }
-        self._async_abort_entries_match(match_dict)
-
         try:
-            title = await validate_input(self.hass, self._data)
+            pool_data = await self.validate_input()
         except PoolConnectionError:
             _LOGGER.exception("Connection exception")
             errors["base"] = "cannot_connect"
@@ -260,7 +284,15 @@ class PoolConfigFlow(ConfigFlow, domain=DOMAIN):
             _LOGGER.exception("Unexpected exception")
             errors["base"] = "unknown"
         else:
-            return self.async_create_entry(title=title, data=self._data)
+            # abort config flow if service is already configured
+            match_dict: dict[str, Any] = {
+                CONF_UNIQUE_ID: pool_data.unique_id,
+            }
+            self._async_abort_entries_match(match_dict)
+
+            return self.async_create_entry(
+                title=pool_data.title, data=pool_data.config_data
+            )
 
         return self.async_show_form(
             step_id="wallet", data_schema=STEP_WALLET_DATA_SCHEMA, errors=errors

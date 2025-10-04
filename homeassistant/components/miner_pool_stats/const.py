@@ -4,12 +4,26 @@ from enum import StrEnum
 
 DOMAIN = "miner_pool_stats"
 
+CONF_TITLE = "title"
+CONF_POOL_KEY = "pool_key"
+CONF_POOL_NAME = "pool_name"
+CONF_POOL_URL = "pool_url"
+CONF_ADDRESS = "address"
+CONF_FRIENDLY_NAME = "friendly_name"
+CONF_COIN_KEY = "coin_key"
+CONF_COIN_NAME = "coin_name"
+CONF_UNIQUE_ID = "unique_id"
+CONF_SOURCE = "source"
+CONF_API_KEY = "api_key"
+
 POOL_SOURCE_PUBLIC_POOL_KEY = "public_pool"
 POOL_SOURCE_PUBLIC_POOL_NAME = "Public Pool"
 POOL_SOURCE_F2_POOL_KEY = "f2_pool"
 POOL_SOURCE_F2_POOL_NAME = "f2pool"
 POOL_SOURCE_SOLO_POOL_KEY = "solo_pool"
 POOL_SOURCE_SOLO_POOL_NAME = "SoloPool.org"
+POOL_SOURCE_COIN_MINERS_KEY = "coin_miners"
+POOL_SOURCE_COIN_MINERS_NAME = "Coin-Miners"
 
 WALLET_ADDRESS = "Wallet Address"
 WORKER = "Worker"

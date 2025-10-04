@@ -1,12 +1,8 @@
 """Sool Pool Client for the Miner Pool Stats integration."""
 
 import logging
-from typing import Any
 
 from aiohttp import ClientError, ClientSession
-
-from homeassistant.const import CONF_ADDRESS, CONF_TYPE
-from homeassistant.core import HomeAssistant
 
 from .hash import HashRate, HashRateUnit
 from .pool import (
@@ -26,16 +22,10 @@ DATA_UPDATE_RETRIES: int = 3
 class SoloPoolClient(PoolClient):
     """Public Pool Client API."""
 
-    def __init__(self, hass: HomeAssistant, config_data: dict[str, Any]) -> None:
-        """Initialize the client instance."""
-        super().__init__(hass, config_data)
-        self._address = config_data[CONF_ADDRESS]
-        self._coin_type = config_data[CONF_TYPE]
-
     async def async_get_data(self) -> PoolAddressData:
         """Get updated data from the pool."""
 
-        url = f"https://{self._coin_type}.solopool.org/api/accounts/{self._address}"
+        url = f"https://{self._pool_config.coin_key}.solopool.org/api/accounts/{self._pool_config.address}"
         _LOGGER.debug("Fetching workers from %s", url)
 
         try:
@@ -64,7 +54,7 @@ class SoloPoolClient(PoolClient):
                     # if there are no workers, log a warning
                     if not workers:
                         _LOGGER.warning(
-                            "No workers found for address %s", self._address
+                            "No workers found for address %s", self._pool_config.address
                         )
 
                     return PoolAddressData(
@@ -76,9 +66,9 @@ class SoloPoolClient(PoolClient):
                     )
 
                 raise PoolConnectionError(
-                    f"Lookup of '{self._address}' failed: Status code {response.status}"
+                    f"Lookup of '{self._pool_config.address}' failed: Status code {response.status}"
                 )
         except ClientError as error:
             raise PoolConnectionError(
-                f"Lookup of '{self._address}' failed: {self._get_error_message(error)}"
+                f"Lookup of '{self._pool_config.address}' failed: {self._get_error_message(error)}"
             ) from error

@@ -7,15 +7,20 @@ from typing import Any
 
 from homeassistant.components.recorder import get_instance, history
 from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
-from homeassistant.const import (
-    CONF_ADDRESS,
-    CONF_FRIENDLY_NAME,
-    CONF_TYPE,
-    CONF_UNIQUE_ID,
-)
 from homeassistant.core import HomeAssistant
 
-from .const import KEY_BEST_DIFFICULTY, CryptoCoin
+from .const import (
+    CONF_ADDRESS,
+    CONF_API_KEY,
+    CONF_COIN_KEY,
+    CONF_COIN_NAME,
+    CONF_POOL_KEY,
+    CONF_POOL_NAME,
+    CONF_POOL_URL,
+    CONF_TITLE,
+    CONF_UNIQUE_ID,
+    KEY_BEST_DIFFICULTY,
+)
 
 
 class PoolConnectionError(Exception):
@@ -26,9 +31,29 @@ class PoolConnectionError(Exception):
 class PoolInitData:
     """Representation of Pool initialization data."""
 
+    def __init__(self, config_data: dict[str, Any]) -> None:
+        """Initialize PoolInitData object."""
+        self.config_data = config_data
+        self.title = config_data[CONF_TITLE]
+        self.unique_id = config_data[CONF_UNIQUE_ID]
+        self.pool_key = config_data[CONF_POOL_KEY]
+        self.pool_name = config_data[CONF_POOL_NAME]
+        self.pool_url = config_data.get(CONF_POOL_URL)
+        self.coin_key = config_data[CONF_COIN_KEY]
+        self.coin_name = config_data[CONF_COIN_NAME]
+        self.address = config_data[CONF_ADDRESS]
+        self.api_key = config_data.get(CONF_API_KEY)
+
+    config_data: dict[str, Any]
+    title: str
+    unique_id: str
+    pool_key: str
     pool_name: str
+    pool_url: str | None
+    coin_key: str
     coin_name: str
     address: str
+    api_key: str | None
 
 
 @dataclass
@@ -55,30 +80,24 @@ class PoolAddressData:
 class PoolClient:
     """Client for interacting with the pool."""
 
-    def __init__(self, hass: HomeAssistant, config_data: dict[str, Any]) -> None:
+    def __init__(self, hass: HomeAssistant, pool_config: PoolInitData) -> None:
         """Initialize the client instance."""
         self._hass = hass
-        self._config_data = config_data
+        self._pool_config = pool_config
 
-    async def async_initialize(self) -> PoolInitData:
+    async def async_initialize(self, config_data: dict[str, Any]) -> dict[str, Any]:
         """Perform async initialization of client instance."""
         await self.async_get_data()
-        return PoolInitData(
-            self._config_data[CONF_FRIENDLY_NAME],
-            CryptoCoin(self._config_data[CONF_TYPE]).name,
-            self._config_data[CONF_ADDRESS],
-        )
+        return config_data
 
     @abstractmethod
     async def async_get_data(self) -> PoolAddressData:
         """Fetch data from the pool."""
 
-    async def _get_max_best_difficulty(
-        self, config_data: dict[str, Any], worker_name: str
-    ) -> float:
+    async def _get_max_best_difficulty(self, worker_name: str) -> float:
         """Get the maximum value for the difficulty sensor."""
 
-        entity_id = f"{SENSOR_DOMAIN}.{config_data[CONF_UNIQUE_ID]}_{worker_name}_{KEY_BEST_DIFFICULTY}"
+        entity_id = f"{SENSOR_DOMAIN}.{self._pool_config.unique_id}_{worker_name}_{KEY_BEST_DIFFICULTY}"
 
         val = await get_instance(self._hass).async_add_executor_job(
             partial(
