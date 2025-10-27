@@ -73,7 +73,7 @@ STEP_POOL_SOURCE_SCHEMA = vol.Schema(
 
 STEP_PUBLIC_POOL_DATA_SCHEMA = vol.Schema(
     {
-        vol.Required(CONF_POOL_URL, default="https://web.public-pool.io/"): str,
+        vol.Required(CONF_POOL_URL, default="https://public-pool.io:40557/"): str,
     }
 )
 
