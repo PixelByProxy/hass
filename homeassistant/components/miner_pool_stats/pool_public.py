@@ -3,7 +3,7 @@
 from datetime import datetime, timedelta
 import logging
 
-from aiohttp import ClientError, ClientSession
+from aiohttp import ClientError, ClientSession, ClientTimeout
 
 from homeassistant.util.dt import as_utc, now
 
@@ -35,7 +35,10 @@ class PublicPoolClient(PoolClient):
         _LOGGER.debug("Fetching workers from %s", url)
 
         try:
-            async with ClientSession() as session, session.get(url) as response:
+            async with (
+                ClientSession() as session,
+                session.get(url, timeout=ClientTimeout(total=55)) as response,
+            ):
                 if response.status == 200:
                     json = await response.json()
 
