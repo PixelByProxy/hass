@@ -23,6 +23,7 @@ from homeassistant.const import (
     UnitOfElectricPotential,
     UnitOfEnergy,
     UnitOfEnergyDistance,
+    UnitOfHashRate,
     UnitOfInformation,
     UnitOfLength,
     UnitOfMass,
@@ -221,6 +222,30 @@ class DataRateConverter(BaseUnitConverter):
         UnitOfDataRate.GIBIBYTES_PER_SECOND: 1 / 2**33,
     }
     VALID_UNITS = set(UnitOfDataRate)
+
+
+class HashRateConverter(BaseUnitConverter):
+    """Utility to convert hash rate values.
+
+    Uses the `HashRateUnit` enumeration from the Miner Pool Stats integration
+    where the base unit is `H` (hashes per second).
+    """
+
+    UNIT_CLASS = "hash_rate"
+    # Map each HashRateUnit to a ratio relative to the base unit (H).
+    # Following the convention used elsewhere in this module, the mapping
+    # stores a multiplier that converts from the unit to the base unit.
+    # Example: 1 KH = 1000 H, so we store 1/1000 for KH.
+    _UNIT_CONVERSION: dict[str | None, float] = {
+        UnitOfHashRate.HASHES_PER_SECOND: 1,
+        UnitOfHashRate.KILO_HASHES_PER_SECOND: 1 / 1_000,
+        UnitOfHashRate.MEGA_HASHES_PER_SECOND: 1 / 1_000_000,
+        UnitOfHashRate.GIGA_HASHES_PER_SECOND: 1 / 1_000_000_000,
+        UnitOfHashRate.TERA_HASHES_PER_SECOND: 1 / 1_000_000_000_000,
+        UnitOfHashRate.PETA_HASHES_PER_SECOND: 1 / 1_000_000_000_000_000,
+        UnitOfHashRate.EXA_HASHES_PER_SECOND: 1 / 1_000_000_000_000_000_000,
+    }
+    VALID_UNITS = set(UnitOfHashRate)
 
 
 class AreaConverter(BaseUnitConverter):

@@ -29,6 +29,7 @@ from homeassistant.const import (
     UnitOfEnergy,
     UnitOfEnergyDistance,
     UnitOfFrequency,
+    UnitOfHashRate,
     UnitOfInformation,
     UnitOfIrradiance,
     UnitOfLength,
@@ -60,6 +61,7 @@ from homeassistant.util.unit_conversion import (
     ElectricPotentialConverter,
     EnergyConverter,
     EnergyDistanceConverter,
+    HashRateConverter,
     InformationConverter,
     MassConverter,
     MassVolumeConcentrationConverter,
@@ -243,6 +245,11 @@ class SensorDeviceClass(StrEnum):
     Unit of measurement:
     - SI / metric: `L`, `m³`
     - USCS / imperial: `ft³`, `CCF`, `MCF`
+    """
+
+    HASH_RATE = "hash_rate"
+    """Hash rate.
+    Unit of measurement: `H/s`, `KH/s`, `MH/s`, `GH/s`, `TH/s`, `PH/s`
     """
 
     HUMIDITY = "humidity"
@@ -562,6 +569,7 @@ UNIT_CONVERTERS: dict[SensorDeviceClass | str | None, type[BaseUnitConverter]] =
     SensorDeviceClass.ENERGY_DISTANCE: EnergyDistanceConverter,
     SensorDeviceClass.ENERGY_STORAGE: EnergyConverter,
     SensorDeviceClass.GAS: VolumeConverter,
+    SensorDeviceClass.HASH_RATE: HashRateConverter,
     SensorDeviceClass.POWER: PowerConverter,
     SensorDeviceClass.POWER_FACTOR: UnitlessRatioConverter,
     SensorDeviceClass.PRECIPITATION: DistanceConverter,
@@ -624,6 +632,7 @@ DEVICE_CLASS_UNITS: dict[SensorDeviceClass, set[type[StrEnum] | str | None]] = {
         UnitOfVolume.LITERS,
         UnitOfVolume.MILLE_CUBIC_FEET,
     },
+    SensorDeviceClass.HASH_RATE: set(UnitOfHashRate),
     SensorDeviceClass.HUMIDITY: {PERCENTAGE},
     SensorDeviceClass.ILLUMINANCE: {LIGHT_LUX},
     SensorDeviceClass.IRRADIANCE: set(UnitOfIrradiance),
@@ -712,6 +721,7 @@ UNITS_PRECISION = {
     SensorDeviceClass.ENERGY_STORAGE: (UnitOfEnergy.WATT_HOUR, 0),
     SensorDeviceClass.FREQUENCY: (UnitOfFrequency.HERTZ, 0),
     SensorDeviceClass.GAS: (UnitOfVolume.MILLILITERS, 0),
+    SensorDeviceClass.HASH_RATE: (UnitOfHashRate.HASHES_PER_SECOND, 0),
     SensorDeviceClass.IRRADIANCE: (UnitOfIrradiance.WATTS_PER_SQUARE_METER, 0),
     SensorDeviceClass.POWER: (UnitOfPower.WATT, 0),
     SensorDeviceClass.PRECIPITATION: (UnitOfPrecipitationDepth.CENTIMETERS, 0),
@@ -760,6 +770,7 @@ DEVICE_CLASS_STATE_CLASSES: dict[SensorDeviceClass, set[SensorStateClass]] = {
     SensorDeviceClass.ENUM: set(),
     SensorDeviceClass.FREQUENCY: {SensorStateClass.MEASUREMENT},
     SensorDeviceClass.GAS: {SensorStateClass.TOTAL, SensorStateClass.TOTAL_INCREASING},
+    SensorDeviceClass.HASH_RATE: {SensorStateClass.MEASUREMENT},
     SensorDeviceClass.HUMIDITY: {SensorStateClass.MEASUREMENT},
     SensorDeviceClass.ILLUMINANCE: {SensorStateClass.MEASUREMENT},
     SensorDeviceClass.IRRADIANCE: {SensorStateClass.MEASUREMENT},

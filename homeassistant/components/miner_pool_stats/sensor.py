@@ -7,11 +7,12 @@ from dataclasses import dataclass
 
 from homeassistant.components.sensor import (
     DOMAIN as SENSOR_DOMAIN,
+    SensorDeviceClass,
     SensorEntity,
     SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.const import EntityCategory
+from homeassistant.const import EntityCategory, UnitOfHashRate
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 from homeassistant.helpers.typing import StateType
@@ -23,7 +24,6 @@ from .const import (
     KEY_TOTAL_PAID,
     KEY_WORKER_COUNT,
     UNIT_DIFFICULTY,
-    UNIT_HASH_RATE,
     UNIT_WORKER_COUNT,
     CryptoCoin,
 )
@@ -98,7 +98,9 @@ WORKER_SENSOR_DESCRIPTIONS = [
         key=KEY_HASH_RATE,
         translation_key=KEY_HASH_RATE,
         state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=UNIT_HASH_RATE,
+        native_unit_of_measurement=UnitOfHashRate.HASHES_PER_SECOND,
+        suggested_unit_of_measurement=UnitOfHashRate.TERA_HASHES_PER_SECOND,
+        device_class=SensorDeviceClass.HASH_RATE,
         value_fn=lambda worker: worker.hash_rate,
         entity_category=EntityCategory.DIAGNOSTIC,
     ),

@@ -852,6 +852,19 @@ class UnitOfDataRate(StrEnum):
     GIBIBYTES_PER_SECOND = "GiB/s"
 
 
+# Hash_rate units
+class UnitOfHashRate(StrEnum):
+    """Hash rate units."""
+
+    HASHES_PER_SECOND = "H/s"
+    KILO_HASHES_PER_SECOND = "KH/s"
+    MEGA_HASHES_PER_SECOND = "MH/s"
+    GIGA_HASHES_PER_SECOND = "GH/s"
+    TERA_HASHES_PER_SECOND = "TH/s"
+    PETA_HASHES_PER_SECOND = "PH/s"
+    EXA_HASHES_PER_SECOND = "EH/s"
+
+
 # States
 COMPRESSED_STATE_STATE: Final = "s"
 COMPRESSED_STATE_ATTRIBUTES: Final = "a"
